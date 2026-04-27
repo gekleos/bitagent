@@ -1,0 +1,64 @@
+---
+id: bitagent
+name: BitAgent
+description: |
+  BitAgent is a self-hosted, lightweight indexing and search tool for personal use.
+  It crawls the public BitTorrent DHT, classifies torrents with a CEL-based rule
+  engine, and exposes the results via a Torznab-compatible API for Sonarr, Radarr,
+  Prowlarr, Lidarr, and Readarr. Operators run their own instance; access is
+  gated by a per-instance API key.
+language: en-US
+type: private
+encoding: UTF-8
+links:
+  - https://github.com/gekleos/bitagent
+
+caps:
+  categorymappings:
+    - {id: 5000, cat: TV, desc: TV}
+    - {id: 5030, cat: TV/SD, desc: TV/SD}
+    - {id: 5040, cat: TV/HD, desc: TV/HD}
+    - {id: 2000, cat: Movies, desc: Movies}
+    - {id: 2030, cat: Movies/SD, desc: Movies/SD}
+    - {id: 2040, cat: Movies/HD, desc: Movies/HD}
+    - {id: 2050, cat: Movies/UHD, desc: Movies/UHD}
+    - {id: 3000, cat: Audio, desc: Audio}
+    - {id: 3010, cat: Audio/MP3, desc: Audio/MP3}
+    - {id: 3020, cat: Audio/Lossless, desc: Audio/Lossless}
+    - {id: 7000, cat: Books, desc: Books}
+    - {id: 7020, cat: Books/EBook, desc: Books/EBook}
+  modes:
+    search: [q]
+    tv-search: [q, season, ep, imdbid, tvdbid, tvmazeid]
+    movie-search: [q, imdbid, tmdbid]
+    music-search: [q, artist, album]
+    book-search: [q, author, title]
+
+settings:
+  - name: baseurl
+    type: text
+    label: Base URL
+    default: ""
+    required: true
+    helpText: |
+      The full HTTPS base URL of your BitAgent instance, including scheme and
+      port if non-standard (e.g. https://bitagent.example.com:3333).
+  - name: apikey
+    type: password
+    label: API Key
+    required: true
+    helpText: |
+      Your BitAgent TORZNAB_API_KEY. Generate via `openssl rand -hex 32` on the
+      BitAgent host and inject as the TORZNAB_API_KEY env var.
+
+search:
+  paths:
+    - path: torznab
+      response:
+        type: xml
+      categories: [5000, 5030, 5040, 2000, 2030, 2040, 2050, 3000, 3010, 3020, 7000, 7020]
+
+download:
+  method: get
+
+protocol: torrent
