@@ -73,8 +73,3 @@ Independent release cadences. The dashboard ships UI fixes in days; the indexer 
 
 **Operator changes a setting.** Dashboard form → `PUT /api/settings/overrides/<key>` (auth required). FastAPI validates the field is in the `MUTABLE_FIELDS` allowlist, writes to SQLite, appends an audit row. Next request reads the override via the custom `pydantic-settings` source — no restart.
 
-## Where to read next
-
-- Concepts: [classifier](classifier.md), [evidence](evidence.md), [DHT](dht.md), [auth](auth.md)
-- Reference: [GraphQL API](../reference/graphql.md), [Torznab API](../reference/torznab.md), [Metrics](../reference/metrics.md)
-- Setup: [compose: tailnet](../../examples/compose.tailnet.yml), [compose: public](../../examples/compose.public.yml), [compose: authelia](../../examples/compose.authelia.yml)
