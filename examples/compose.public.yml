@@ -1,0 +1,98 @@
+# BitAgent — Public-internet deployment with Caddy + api-key auth
+#
+# Use when:
+#   - the dashboard is reachable from the open internet
+#   - no SSO / Authelia / NPM in front
+#   - operators authenticate via DASHBOARD_API_KEY only
+#
+# Auth posture:
+#   - REQUIRE_AUTH=true
+#   - DASHBOARD_API_KEY mandatory (set in .env)
+#   - TRUST_NPM_HEADERS=false (auto-resolves the same way; explicit for clarity)
+#   - Caddy terminates TLS via Let's Encrypt automatic certs
+#   - TORZNAB_API_KEY mandatory (separate from dashboard key)
+#
+# .env template (place alongside this file):
+#   DASHBOARD_API_KEY=<openssl rand -hex 32>
+#   TORZNAB_API_KEY=<openssl rand -hex 32>
+#   BITAGENT_DOMAIN=bitagent.example.com
+#   POSTGRES_USER=bitagent
+#   POSTGRES_PASSWORD=<openssl rand -hex 16>
+#   POSTGRES_DB=bitagent
+
+services:
+  bitagent:
+    image: ghcr.io/gekleos/bitagent:latest
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable
+      BITAGENT_LOG_LEVEL: info
+      TORZNAB_API_KEY: ${TORZNAB_API_KEY}
+    ports:
+      - "3333:3333"  # Torznab — *arr clients hit this directly
+    networks: [public-net]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  bitagent-ui:
+    image: ghcr.io/gekleos/bitagent-ui:latest
+    restart: unless-stopped
+    environment:
+      BITAGENT_GRAPHQL_URL: http://bitagent:3333/graphql
+      BITAGENT_METRICS_URL: http://bitagent:3333/metrics
+      REQUIRE_AUTH: "true"
+      DASHBOARD_API_KEY: ${DASHBOARD_API_KEY}
+      TRUST_NPM_HEADERS: "false"
+      TRUST_FORWARDED_USER: "false"
+    networks: [public-net]
+    depends_on: [bitagent]
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER}", "-d", "${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [public-net]
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"  # HTTP/3
+    volumes:
+      - caddy-data:/data
+      - caddy-config:/config
+    configs:
+      - source: Caddyfile
+        target: /etc/caddy/Caddyfile
+    networks: [public-net]
+    depends_on: [bitagent-ui]
+
+configs:
+  Caddyfile:
+    content: |
+      ${BITAGENT_DOMAIN} {
+        encode gzip
+        reverse_proxy bitagent-ui:8080
+      }
+
+volumes:
+  postgres-data:
+  caddy-data:
+  caddy-config:
+
+networks:
+  public-net:
+    driver: bridge

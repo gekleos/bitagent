@@ -1,0 +1,72 @@
+# BitAgent — Tailnet / private-network deployment
+#
+# Use when:
+#   - bitagent-ui sits behind an upstream auth-proxy on your private network
+#     (e.g., Authelia, oauth2-proxy, an SSO gateway you already operate)
+#   - the dashboard is NOT directly reachable from the public internet
+#
+# Auth posture:
+#   - REQUIRE_AUTH=true; the dashboard rejects unauthenticated requests
+#   - upstream proxy is expected to terminate TLS and pass identity headers
+#   - DASHBOARD_API_KEY is optional but recommended as a machine-client fallback
+#
+# .env template (place alongside this file):
+#   POSTGRES_USER=bitagent
+#   POSTGRES_PASSWORD=<openssl rand -hex 16>
+#   POSTGRES_DB=bitagent
+#   TORZNAB_API_KEY=<openssl rand -hex 32>   # for *arr Torznab clients
+
+services:
+  # bitagent — the Go DHT crawler + classifier + Torznab adapter.
+  bitagent:
+    image: ghcr.io/gekleos/bitagent:latest
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable
+      BITAGENT_LOG_LEVEL: info
+      TORZNAB_API_KEY: ${TORZNAB_API_KEY}
+    ports:
+      - "3333:3333"
+    networks: [internal]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # bitagent-ui — the FastAPI operator dashboard. Trusts the upstream proxy's
+  # forwarded identity headers; explicitly does NOT expose the public api-key path.
+  bitagent-ui:
+    image: ghcr.io/gekleos/bitagent-ui:latest
+    restart: unless-stopped
+    environment:
+      BITAGENT_GRAPHQL_URL: http://bitagent:3333/graphql
+      BITAGENT_METRICS_URL: http://bitagent:3333/metrics
+      REQUIRE_AUTH: "true"
+      TRUST_FORWARDED_USER: "true"
+      TRUST_NPM_HEADERS: "false"  # explicit; only enable if your proxy strips client X-Auth-* headers
+    ports:
+      - "8080:8080"
+    networks: [internal]
+    depends_on: [bitagent]
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER}", "-d", "${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [internal]
+
+volumes:
+  postgres-data:
+
+networks:
+  internal:
+    driver: bridge
