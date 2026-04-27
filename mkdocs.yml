@@ -1,0 +1,93 @@
+site_name: BitAgent
+site_description: Self-hosted BitTorrent DHT crawler with native Sonarr/Radarr Torznab integration.
+site_url: https://gekleos.github.io/bitagent/
+repo_url: https://github.com/gekleos/bitagent
+repo_name: gekleos/bitagent
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - search.highlight
+    - search.suggest
+    - content.code.copy
+    - content.code.annotate
+    - toc.follow
+    - content.action.edit
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  font:
+    text: Inter
+    code: JetBrains Mono
+  icon:
+    repo: fontawesome/brands/github
+  logo: ../static/v1/logo.svg
+  favicon: ../static/v1/logo.svg
+
+plugins:
+  - search
+  - mermaid2
+  - glightbox
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - footnotes
+  - tables
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:mermaid2.fence_mermaid_custom
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Quickstart: quickstart.md
+  - FAQ: faq.md
+  - Concepts:
+      - Architecture: concepts/architecture.md
+  - Integrations:
+      - Sonarr: integrations/sonarr.md
+      - Radarr: integrations/radarr.md
+      - Prowlarr: integrations/prowlarr.md
+      - Lidarr: integrations/lidarr.md
+      - Private tracker mode: integrations/private-tracker-mode.md
+  - Project:
+      - Improvements vs upstream: project/improvements.md
+      - Legal disclaimer: legal/disclaimer.md
+      - Donate (placeholder org): project/donate-banner-snippets.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/gekleos/bitagent
+  generator: false
+
+copyright: |
+  &copy; 2026 BitAgent contributors &middot; MIT licensed &middot;
+  Donate to <a href="https://www.children.org/" target="_blank" rel="noopener noreferrer">placeholder org</a>
+  (no affiliation)
