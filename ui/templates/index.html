@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BitAgent Dashboard</title>
+  <link rel="stylesheet" href="/static/css/tokens.css">
+  <link rel="stylesheet" href="/static/css/app.css">
+  <link rel="icon" href="/static/img/favicon.svg" type="image/svg+xml">
+</head>
+<body>
+<div class="app-layout">
+  <!-- ── Sidebar ──────────────────────────────────────────────────── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <svg viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="var(--color-accent)"/><path d="M8 11h6v2H8zm0 4h10v2H8zm0 4h8v2H8zm18-7l-5 5-3-3 1.4-1.4L21 14.2l3.6-3.6L26 12z" fill="#fff"/></svg>
+      <div>
+        <h1>BitAgent</h1>
+        <small>v1.0.0</small>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="sidebar-nav-group">
+        <div class="sidebar-nav-label">Overview</div>
+        <a class="nav-item active" data-tab="dashboard" onclick="switchTab('dashboard')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          Dashboard
+        </a>
+        <a class="nav-item" data-tab="library" onclick="switchTab('library')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+          Library
+          <span class="badge" id="libCount">0</span>
+        </a>
+      </div>
+
+      <div class="sidebar-nav-group">
+        <div class="sidebar-nav-label">Operations</div>
+        <a class="nav-item" data-tab="wants" onclick="switchTab('wants')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          Wants
+        </a>
+        <a class="nav-item" data-tab="evidence" onclick="switchTab('evidence')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          Evidence
+        </a>
+      </div>
+
+      <div class="sidebar-nav-group">
+        <div class="sidebar-nav-label">System</div>
+        <a class="nav-item" data-tab="settings" onclick="switchTab('settings')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.32 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+          Settings
+        </a>
+        <a class="nav-item" data-tab="system" onclick="switchTab('system')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          System
+        </a>
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="theme-toggle">
+        <span>Dark mode</span>
+        <div class="theme-toggle-switch" onclick="toggleTheme()"></div>
+      </div>
+      <div class="sidebar-user">
+        <div class="avatar">{{ identity.display[0] | upper }}</div>
+        <div>
+          <div style="font-weight:500;">{{ identity.display }}</div>
+          <div class="text-xs text-subtle">{{ identity.method }}</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── Main Content ─────────────────────────────────────────────── -->
+  <main class="main-content">
+    <header class="page-header">
+      <div class="page-header-left">
+        <button class="mobile-toggle btn-icon" onclick="document.getElementById('sidebar').classList.toggle('open')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <div>
+          <h2 class="page-title" id="pageTitle">Dashboard</h2>
+          <p class="page-subtitle" id="pageSubtitle">System overview and live metrics</p>
+        </div>
+      </div>
+      <div class="page-header-actions">
+        <div style="position:relative">
+          <button class="btn btn-ghost btn-icon notif-btn" onclick="toggleNotifications()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+            <span class="notif-dot" id="notifDot" style="display:none;"></span>
+          </button>
+          <div class="notif-panel" id="notifPanel">
+            <div class="notif-panel-header">
+              <span style="font-weight:var(--weight-semibold);font-size:var(--text-sm)">Notifications</span>
+              <button class="btn btn-ghost btn-sm" onclick="markAllRead()">Mark all read</button>
+            </div>
+            <div class="notif-panel-body" id="notifList">
+              <p class="text-sm text-muted" style="padding:var(--space-6);text-align:center">No notifications</p>
+            </div>
+          </div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="seedDemo()" title="Populate with demo data">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+          Seed Demo
+        </button>
+        <button class="btn btn-secondary btn-sm" onclick="refreshCurrentTab()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+          Refresh
+        </button>
+      </div>
+    </header>
+
+    <div class="page-body">
+      <!-- ═══════════════════════ DASHBOARD TAB ═══════════════════════ -->
+      <div class="tab-panel active" id="tab-dashboard">
+        <div class="stats-grid section-gap" id="statsGrid">
+          <div class="stat-card">
+            <div class="flex items-center justify-between">
+              <div class="stat-icon blue">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+              </div>
+              <div class="stat-change up"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/></svg></div>
+            </div>
+            <div class="stat-label">DHT Peers</div>
+            <div class="stat-value" id="statPeers">--</div>
+          </div>
+          <div class="stat-card">
+            <div class="flex items-center justify-between">
+              <div class="stat-icon green">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+              </div>
+            </div>
+            <div class="stat-label">Total Torrents</div>
+            <div class="stat-value" id="statTorrents">--</div>
+          </div>
+          <div class="stat-card">
+            <div class="flex items-center justify-between">
+              <div class="stat-icon orange">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              </div>
+            </div>
+            <div class="stat-label">Releases</div>
+            <div class="stat-value" id="statReleases">--</div>
+          </div>
+          <div class="stat-card">
+            <div class="flex items-center justify-between">
+              <div class="stat-icon red">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              </div>
+            </div>
+            <div class="stat-label">Evidence Events</div>
+            <div class="stat-value" id="statEvidence">--</div>
+          </div>
+          <div class="stat-card">
+            <div class="flex items-center justify-between">
+              <div class="stat-icon blue">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              </div>
+            </div>
+            <div class="stat-label">Throughput</div>
+            <div class="stat-value" id="statThroughput">--</div>
+            <div class="text-xs text-subtle">torrents/min</div>
+          </div>
+          <div class="stat-card">
+            <div class="flex items-center justify-between">
+              <div class="stat-icon green">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+              </div>
+            </div>
+            <div class="stat-label">Cache Hit Ratio</div>
+            <div class="stat-value" id="statCache">--</div>
+            <div class="progress mt-2"><div class="progress-bar green" id="cacheBar" style="width:0%"></div></div>
+          </div>
+        </div>
+
+        <div class="grid-2 section-gap">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Category Breakdown</span>
+            </div>
+            <div class="card-body" id="categoryChart">
+              <div class="empty-state" style="padding:var(--space-8)">
+                <p class="text-sm text-muted">Connect to BitAgent core to see category data</p>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">System Health</span>
+              <span class="pill pill-success"><span class="pill-dot"></span> Healthy</span>
+            </div>
+            <div class="card-body" id="healthPanel">
+              <div class="flex flex-col gap-3">
+                <div class="flex items-center justify-between">
+                  <span class="text-sm">Uptime</span>
+                  <span class="text-sm font-mono" id="statUptime">--</span>
+                </div>
+                <div class="divider" style="margin:0"></div>
+                <div class="flex items-center justify-between">
+                  <span class="text-sm">Last Crawl</span>
+                  <span class="text-sm font-mono" id="statLastCrawl">--</span>
+                </div>
+                <div class="divider" style="margin:0"></div>
+                <div class="flex items-center justify-between">
+                  <span class="text-sm">GraphQL API</span>
+                  <span class="pill pill-success" id="gqlStatus"><span class="pill-dot"></span> Connected</span>
+                </div>
+                <div class="divider" style="margin:0"></div>
+                <div class="flex items-center justify-between">
+                  <span class="text-sm">Metrics Endpoint</span>
+                  <span class="pill pill-success" id="metricsStatus"><span class="pill-dot"></span> Connected</span>
+                </div>
+                <div class="divider" style="margin:0"></div>
+                <div class="flex items-center justify-between">
+                  <span class="text-sm">Dashboard DB</span>
+                  <span class="pill pill-success"><span class="pill-dot"></span> SQLite OK</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Recent Activity</span>
+            <button class="btn btn-ghost btn-sm" onclick="loadRecentActivity()">View all</button>
+          </div>
+          <div class="card-body table-wrap">
+            <table>
+              <thead>
+                <tr><th>Time</th><th>Event</th><th>Content</th><th>Type</th><th>Status</th></tr>
+              </thead>
+              <tbody id="activityTable">
+                <tr><td colspan="5" class="text-muted text-sm" style="text-align:center;padding:var(--space-8)">Loading activity...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════ LIBRARY TAB ═════════════════════════ -->
+      <div class="tab-panel" id="tab-library">
+        <div class="flex items-center justify-between mb-6">
+          <div class="flex items-center gap-4">
+            <div class="search-box">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+              <input class="input" id="libSearch" type="text" placeholder="Search torrents..." style="width:300px;" oninput="debouncedLoadLibrary()">
+            </div>
+            <select class="select" id="libFilter" onchange="loadLibrary()" style="width:160px;">
+              <option value="">All types</option>
+              <option value="movie">Movies</option>
+              <option value="tv_show">TV Shows</option>
+              <option value="music">Music</option>
+              <option value="ebook">Books</option>
+              <option value="software">Software</option>
+              <option value="unknown">Unknown</option>
+            </select>
+          </div>
+          <div class="flex items-center gap-2">
+            <button class="btn btn-ghost btn-sm" id="viewGrid" onclick="setLibView('grid')" style="color:var(--color-accent)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+            </button>
+            <button class="btn btn-ghost btn-sm" id="viewList" onclick="setLibView('list')">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div id="libraryGrid" class="poster-grid"></div>
+        <div id="libraryTable" style="display:none;">
+          <div class="card">
+            <div class="card-body table-wrap">
+              <table>
+                <thead>
+                  <tr><th>Name</th><th>Type</th><th>Size</th><th>Seeders</th><th>Score</th><th>Discovered</th></tr>
+                </thead>
+                <tbody id="libTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between mt-6" id="libPagination">
+          <span class="text-sm text-muted" id="libPaginationInfo">Showing 0 of 0</span>
+          <div class="flex gap-2">
+            <button class="btn btn-secondary btn-sm" id="libPrev" onclick="libPage(-1)" disabled>Previous</button>
+            <button class="btn btn-secondary btn-sm" id="libNext" onclick="libPage(1)">Next</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════ WANTS TAB ═══════════════════════════ -->
+      <div class="tab-panel" id="tab-wants">
+        <div class="flex items-center justify-between mb-6">
+          <p class="text-sm text-muted">Operator-defined search targets. BitAgent actively routes queries to match these wants.</p>
+          <button class="btn btn-primary" onclick="openWantModal()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add Want
+          </button>
+        </div>
+
+        <div class="card">
+          <div class="card-body table-wrap">
+            <table>
+              <thead>
+                <tr><th>Title</th><th>Query</th><th>Type</th><th>Priority</th><th>Status</th><th>Created</th><th>Actions</th></tr>
+              </thead>
+              <tbody id="wantsTable">
+                <tr><td colspan="7" class="text-muted text-sm" style="text-align:center;padding:var(--space-8)">Loading wants...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════ EVIDENCE TAB ════════════════════════ -->
+      <div class="tab-panel" id="tab-evidence">
+        <div class="flex items-center justify-between mb-6">
+          <p class="text-sm text-muted">Webhook events from *arr applications. Successful downloads feed ground-truth labels back to the classifier.</p>
+          <button class="btn btn-secondary btn-sm" onclick="loadEvidence()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+            Refresh
+          </button>
+        </div>
+
+        <div class="card">
+          <div class="card-body table-wrap">
+            <table>
+              <thead>
+                <tr><th>Time</th><th>Source</th><th>Torrent</th><th>Type</th><th>Result</th></tr>
+              </thead>
+              <tbody id="evidenceTable">
+                <tr><td colspan="5" class="text-muted text-sm" style="text-align:center;padding:var(--space-8)">Loading evidence events...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between mt-6">
+          <span class="text-sm text-muted" id="evPaginationInfo">Showing 0 of 0</span>
+          <div class="flex gap-2">
+            <button class="btn btn-secondary btn-sm" id="evPrev" onclick="evPage(-1)" disabled>Previous</button>
+            <button class="btn btn-secondary btn-sm" id="evNext" onclick="evPage(1)">Next</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════ SETTINGS TAB ════════════════════════ -->
+      <div class="tab-panel" id="tab-settings">
+        <div class="tab-bar">
+          <button class="tab-btn active" data-stab="config" onclick="switchSettingsTab('config')">Configuration</button>
+          <button class="tab-btn" data-stab="auth" onclick="switchSettingsTab('auth')">Auth & Security</button>
+          <button class="tab-btn" data-stab="integrations" onclick="switchSettingsTab('integrations')">Integrations</button>
+          <button class="tab-btn" data-stab="retention" onclick="switchSettingsTab('retention')">Retention</button>
+          <button class="tab-btn" data-stab="classifier" onclick="switchSettingsTab('classifier')">Classifier</button>
+          <button class="tab-btn" data-stab="audit" onclick="switchSettingsTab('audit')">Audit Log</button>
+        </div>
+
+        <!-- Config sub-tab -->
+        <div class="tab-panel active" id="stab-config">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h3 style="font-size:var(--text-lg);font-weight:var(--weight-semibold);">Runtime Configuration</h3>
+              <p class="text-sm text-muted mt-2">Override defaults without restarting. Changes apply on next request.</p>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="loadSettings()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+              Reload
+            </button>
+          </div>
+          <div class="settings-grid" id="settingsGrid"></div>
+        </div>
+
+        <!-- Auth sub-tab -->
+        <div class="tab-panel" id="stab-auth">
+          <div class="card mb-6">
+            <div class="card-header"><span class="card-title">Authentication Tiers</span></div>
+            <div class="card-body">
+              <p class="text-sm text-muted mb-4">BitAgent uses a 4-tier auth resolver. The first matching tier wins.</p>
+              <table>
+                <thead><tr><th>Priority</th><th>Tier</th><th>Source</th><th>Status</th></tr></thead>
+                <tbody>
+                  <tr><td>1</td><td>API Key</td><td><code class="font-mono text-xs">?apikey= / X-Api-Key / Authorization: Bearer</code></td><td id="authTierApi"><span class="pill pill-neutral">--</span></td></tr>
+                  <tr><td>2</td><td>Reverse Proxy</td><td><code class="font-mono text-xs">X-Auth-User (NPM)</code></td><td id="authTierNpm"><span class="pill pill-neutral">--</span></td></tr>
+                  <tr><td>3</td><td>Forwarded User</td><td><code class="font-mono text-xs">X-Forwarded-User / Remote-User</code></td><td id="authTierFwd"><span class="pill pill-neutral">--</span></td></tr>
+                  <tr><td>4</td><td>SSO Cookie</td><td><code class="font-mono text-xs">Cookie: <span id="ssoCookieName">bitagent_session</span></code></td><td id="authTierSso"><span class="pill pill-neutral">--</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">API Keys</span></div>
+            <div class="card-body">
+              <div class="grid-2">
+                <div class="input-group">
+                  <label class="input-label">Dashboard API Key</label>
+                  <div class="flex gap-2">
+                    <input class="input font-mono" type="password" id="dashKeyDisplay" readonly value="********">
+                    <button class="btn btn-ghost btn-sm" onclick="toggleKeyVisibility('dashKeyDisplay')">Show</button>
+                  </div>
+                </div>
+                <div class="input-group">
+                  <label class="input-label">Torznab API Key</label>
+                  <div class="flex gap-2">
+                    <input class="input font-mono" type="password" id="tzKeyDisplay" readonly value="********">
+                    <button class="btn btn-ghost btn-sm" onclick="toggleKeyVisibility('tzKeyDisplay')">Show</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Integrations sub-tab -->
+        <div class="tab-panel" id="stab-integrations">
+          <div class="grid-2">
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">Sonarr</span>
+                <span class="pill pill-info">Torznab</span>
+              </div>
+              <div class="card-body">
+                <p class="text-sm text-muted mb-4">Add BitAgent as a Torznab indexer in Sonarr.</p>
+                <div class="code-block">URL: http://bitagent:3333/torznab
+API Key: ${TORZNAB_API_KEY}
+Categories: 5000, 5030, 5040</div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">Radarr</span>
+                <span class="pill pill-info">Torznab</span>
+              </div>
+              <div class="card-body">
+                <p class="text-sm text-muted mb-4">Add BitAgent as a Torznab indexer in Radarr.</p>
+                <div class="code-block">URL: http://bitagent:3333/torznab
+API Key: ${TORZNAB_API_KEY}
+Categories: 2000, 2030, 2040, 2050</div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">Prowlarr</span>
+                <span class="pill pill-info">Newznab</span>
+              </div>
+              <div class="card-body">
+                <p class="text-sm text-muted mb-4">Add as Generic Torznab or use the drop-in definition file.</p>
+                <div class="code-block">URL: http://bitagent:3333/torznab
+API Key: ${TORZNAB_API_KEY}
+Sync to: all connected *arr apps</div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">Lidarr</span>
+                <span class="pill pill-info">Torznab</span>
+              </div>
+              <div class="card-body">
+                <p class="text-sm text-muted mb-4">Music search support via Torznab caps.</p>
+                <div class="code-block">URL: http://bitagent:3333/torznab
+API Key: ${TORZNAB_API_KEY}
+Categories: 3000, 3010, 3020</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card mt-6">
+            <div class="card-header">
+              <span class="card-title">TMDB Integration</span>
+              <span class="pill pill-neutral" id="tmdbStatus">Not configured</span>
+            </div>
+            <div class="card-body">
+              <p class="text-sm text-muted mb-4">Optional. Provides poster art for the Library tab. Set TMDB_API_KEY in settings.</p>
+              <div class="input-group">
+                <label class="input-label">TMDB API Key</label>
+                <div class="flex gap-2">
+                  <input class="input font-mono" type="password" id="tmdbKeyInput" placeholder="Enter TMDB API key...">
+                  <button class="btn btn-primary btn-sm" onclick="saveTmdbKey()">Save</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Retention sub-tab -->
+        <div class="tab-panel" id="stab-retention">
+          <div class="card mb-6">
+            <div class="card-header">
+              <span class="card-title">Retention Policy</span>
+              <span class="pill pill-info">Opt-in</span>
+            </div>
+            <div class="card-body">
+              <p class="text-sm text-muted mb-6">Two-layer purge with safety gates. Stale torrents are soft-deleted first, then permanently removed after a grace period.</p>
+              <div class="grid-2">
+                <div class="input-group">
+                  <label class="input-label">Torrent Max Age (days)</label>
+                  <div class="retention-slider-wrap">
+                    <input type="range" class="retention-slider" id="retentionAge" min="7" max="365" value="90" oninput="document.getElementById('retentionAgeVal').textContent=this.value+'d'">
+                    <span class="retention-value" id="retentionAgeVal">90d</span>
+                  </div>
+                  <span class="text-xs text-subtle mt-2">Torrents older than this with 0 seeders will be soft-deleted.</span>
+                </div>
+                <div class="input-group">
+                  <label class="input-label">Grace Period (days)</label>
+                  <div class="retention-slider-wrap">
+                    <input type="range" class="retention-slider" id="retentionGrace" min="1" max="30" value="7" oninput="document.getElementById('retentionGraceVal').textContent=this.value+'d'">
+                    <span class="retention-value" id="retentionGraceVal">7d</span>
+                  </div>
+                  <span class="text-xs text-subtle mt-2">Soft-deleted torrents are permanently purged after this period.</span>
+                </div>
+              </div>
+              <div class="divider"></div>
+              <div class="grid-2">
+                <div class="input-group">
+                  <label class="input-label">Evidence Max Age (days)</label>
+                  <div class="retention-slider-wrap">
+                    <input type="range" class="retention-slider" id="retentionEvidence" min="7" max="365" value="180" oninput="document.getElementById('retentionEvidenceVal').textContent=this.value+'d'">
+                    <span class="retention-value" id="retentionEvidenceVal">180d</span>
+                  </div>
+                </div>
+                <div class="input-group">
+                  <label class="input-label">Poster Cache TTL (days)</label>
+                  <div class="retention-slider-wrap">
+                    <input type="range" class="retention-slider" id="retentionPoster" min="1" max="90" value="30" oninput="document.getElementById('retentionPosterVal').textContent=this.value+'d'">
+                    <span class="retention-value" id="retentionPosterVal">30d</span>
+                  </div>
+                </div>
+              </div>
+              <div class="flex justify-between items-center mt-6" style="justify-content:space-between">
+                <div class="flex items-center gap-3">
+                  <label class="input-label" style="text-transform:none;letter-spacing:0;font-weight:var(--weight-medium)">Enable automatic retention</label>
+                  <div class="theme-toggle-switch" id="retentionToggle" onclick="this.classList.toggle('on')" style="background:var(--color-border)"></div>
+                </div>
+                <button class="btn btn-primary" onclick="toast('Retention policy saved', 'success')">Save Policy</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Storage Usage</span>
+            </div>
+            <div class="card-body">
+              <div class="grid-3">
+                <div>
+                  <div class="stat-label">Postgres</div>
+                  <div class="text-lg" style="font-size:var(--text-lg);font-weight:var(--weight-semibold)">--</div>
+                  <div class="progress mt-2"><div class="progress-bar" style="width:0%"></div></div>
+                </div>
+                <div>
+                  <div class="stat-label">SQLite Sidecar</div>
+                  <div class="text-lg" style="font-size:var(--text-lg);font-weight:var(--weight-semibold)">--</div>
+                  <div class="progress mt-2"><div class="progress-bar green" style="width:0%"></div></div>
+                </div>
+                <div>
+                  <div class="stat-label">Poster Cache</div>
+                  <div class="text-lg" style="font-size:var(--text-lg);font-weight:var(--weight-semibold)">--</div>
+                  <div class="progress mt-2"><div class="progress-bar orange" style="width:0%"></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Classifier sub-tab -->
+        <div class="tab-panel" id="stab-classifier">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h3 style="font-size:var(--text-lg);font-weight:var(--weight-semibold)">CEL Classifier Rules</h3>
+              <p class="text-sm text-muted mt-2">Rules execute in priority order. Ground-truth evidence preempts the chain entirely.</p>
+            </div>
+            <div class="flex gap-2">
+              <button class="btn btn-secondary btn-sm" onclick="loadClassifierRules()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+                Reload
+              </button>
+            </div>
+          </div>
+
+          <div id="classifierRules">
+            <div class="flex flex-col gap-4" id="classifierRulesList">
+              <!-- Demo rules rendered by JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Audit sub-tab -->
+        <div class="tab-panel" id="stab-audit">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Configuration Audit Log</span>
+              <span class="text-xs text-subtle">Every settings change is recorded</span>
+            </div>
+            <div class="card-body" id="auditLog">
+              <div class="text-sm text-muted" style="text-align:center;padding:var(--space-8)">Loading audit log...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════ SYSTEM TAB ══════════════════════════ -->
+      <div class="tab-panel" id="tab-system">
+        <div class="tab-bar">
+          <button class="tab-btn active" data-systab="health" onclick="switchSystemTab('health')">Health Check</button>
+          <button class="tab-btn" data-systab="torznab" onclick="switchSystemTab('torznab')">Torznab Test</button>
+          <button class="tab-btn" data-systab="graphql" onclick="switchSystemTab('graphql')">GraphQL Explorer</button>
+          <button class="tab-btn" data-systab="metrics" onclick="switchSystemTab('metrics')">Raw Metrics</button>
+        </div>
+
+        <!-- Health sub-tab -->
+        <div class="tab-panel active" id="systab-health">
+          <div class="grid-3">
+            <div class="card">
+              <div class="card-header"><span class="card-title">BitAgent Core</span></div>
+              <div class="card-body flex flex-col gap-3">
+                <div class="flex items-center justify-between">
+                  <span class="text-sm">GraphQL API</span>
+                  <span class="pill pill-success" id="sysGql"><span class="pill-dot"></span> OK</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-sm">Torznab Endpoint</span>
+                  <span class="pill pill-success" id="sysTz"><span class="pill-dot"></span> OK</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-sm">Metrics</span>
+                  <span class="pill pill-success" id="sysMetrics"><span class="pill-dot"></span> OK</span>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header"><span class="card-title">Dashboard</span></div>
+              <div class="card-body flex flex-col gap-3">
+                <div class="flex items-center justify-between">
+                  <span class="text-sm">FastAPI</span>
+                  <span class="pill pill-success"><span class="pill-dot"></span> Running</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-sm">SQLite DB</span>
+                  <span class="pill pill-success"><span class="pill-dot"></span> Connected</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-sm">Auth Mode</span>
+                  <span class="pill pill-info" id="sysAuthMode">API Key</span>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header"><span class="card-title">Network</span></div>
+              <div class="card-body flex flex-col gap-3">
+                <div class="flex items-center justify-between">
+                  <span class="text-sm">DHT Port</span>
+                  <span class="font-mono text-sm">4413/udp</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-sm">Torznab Port</span>
+                  <span class="font-mono text-sm">3333/tcp</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-sm">Dashboard Port</span>
+                  <span class="font-mono text-sm">8080/tcp</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card mt-6">
+            <div class="card-header">
+              <span class="card-title">Connectivity Test</span>
+              <button class="btn btn-primary btn-sm" onclick="runHealthChecks()">Run All Checks</button>
+            </div>
+            <div class="card-body" id="healthCheckResults">
+              <p class="text-sm text-muted">Click "Run All Checks" to test connectivity to all services.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Torznab sub-tab -->
+        <div class="tab-panel" id="systab-torznab">
+          <div class="card">
+            <div class="card-header"><span class="card-title">Torznab Query Tester</span></div>
+            <div class="card-body">
+              <p class="text-sm text-muted mb-4">Test Torznab queries against the BitAgent endpoint.</p>
+              <div class="grid-2 mb-4">
+                <div class="input-group">
+                  <label class="input-label">Search Type</label>
+                  <select class="select" id="tzSearchType">
+                    <option value="search">General (t=search)</option>
+                    <option value="tvsearch">TV (t=tvsearch)</option>
+                    <option value="movie">Movie (t=movie)</option>
+                    <option value="music">Music (t=music)</option>
+                    <option value="caps">Capabilities (t=caps)</option>
+                  </select>
+                </div>
+                <div class="input-group">
+                  <label class="input-label">Query</label>
+                  <input class="input" id="tzQuery" placeholder="Search term...">
+                </div>
+              </div>
+              <button class="btn btn-primary" onclick="runTorznabTest()">Execute Query</button>
+              <div class="code-block mt-4" id="tzResult" style="display:none;max-height:400px;overflow:auto;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- GraphQL sub-tab -->
+        <div class="tab-panel" id="systab-graphql">
+          <div class="card">
+            <div class="card-header"><span class="card-title">GraphQL Explorer</span></div>
+            <div class="card-body">
+              <p class="text-sm text-muted mb-4">Run queries against the BitAgent GraphQL API.</p>
+              <div class="input-group mb-4">
+                <label class="input-label">Query</label>
+                <textarea class="textarea gql-editor" id="gqlQuery" rows="8">{
+  systemStats {
+    totalTorrents
+    totalReleases
+    dhtPeerCount
+    uptimeSeconds
+  }
+}</textarea>
+              </div>
+              <div class="input-group mb-4">
+                <label class="input-label">Variables (JSON)</label>
+                <textarea class="textarea gql-editor" id="gqlVars" rows="3">{}</textarea>
+              </div>
+              <button class="btn btn-primary" onclick="runGqlQuery()">Execute</button>
+              <div class="mt-4">
+                <div class="input-label mb-2">Result</div>
+                <div class="gql-result" id="gqlResult">Results will appear here...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Metrics sub-tab -->
+        <div class="tab-panel" id="systab-metrics">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Prometheus Metrics (Raw)</span>
+              <button class="btn btn-secondary btn-sm" onclick="loadRawMetrics()">Refresh</button>
+            </div>
+            <div class="card-body">
+              <div class="code-block" id="rawMetrics" style="max-height:600px;overflow:auto;">Loading metrics...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ── Want Modal ────────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="wantModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="wantModalTitle">Add Want</span>
+      <button class="modal-close" onclick="closeWantModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="flex flex-col gap-4">
+        <div class="input-group">
+          <label class="input-label">Title</label>
+          <input class="input" id="wantTitle" placeholder="e.g., Breaking Bad S05">
+        </div>
+        <div class="grid-2">
+          <div class="input-group">
+            <label class="input-label">Content Type</label>
+            <select class="select" id="wantType">
+              <option value="any">Any</option>
+              <option value="movie">Movie</option>
+              <option value="tv_show">TV Show</option>
+              <option value="music">Music</option>
+              <option value="ebook">Book</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label class="input-label">Priority (1-100)</label>
+            <input class="input" id="wantPriority" type="number" min="1" max="100" value="50">
+          </div>
+        </div>
+        <div class="input-group">
+          <label class="input-label">Search Query</label>
+          <input class="input" id="wantQuery" placeholder="Search terms for DHT matching">
+        </div>
+        <div class="input-group">
+          <label class="input-label">Notes (optional)</label>
+          <textarea class="textarea" id="wantNotes" rows="3" placeholder="Any additional context..."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeWantModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveWant()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Torrent Detail Modal ──────────────────────────────────────────── -->
+<div class="modal-overlay" id="torrentModal">
+  <div class="modal" style="max-width:680px;">
+    <div class="modal-header">
+      <span class="modal-title">Torrent Details</span>
+      <button class="modal-close" onclick="closeTorrentModal()">&times;</button>
+    </div>
+    <div class="modal-body" id="torrentDetail">Loading...</div>
+  </div>
+</div>
+
+<!-- ── Toast container ───────────────────────────────────────────────── -->
+<div class="toast-container" id="toasts"></div>
+
+<script src="/static/js/app.js"></script>
+</body>
+</html>
