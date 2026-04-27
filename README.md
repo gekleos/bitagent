@@ -9,16 +9,6 @@ Turn raw DHT noise into ground-truthed torrent metadata for your Sonarr and Rada
 - A Torznab-compatible provider that speaks natively to Sonarr, Radarr, Prowlarr, Lidarr, and Readarr
 - A self-improving evidence pipeline that uses *arr webhook feedback to continuously prune false positives
 
-## Why BitAgent over upstream bitmagnet
-
-| Area | Before (upstream) | After (BitAgent) |
-|---|---|---|
-| Classification | Keyword/regex matching only | CEL classifier + optional LLM rerank for ambiguous cases |
-| Evidence | Static seeding, manual seed-to-release mapping | Automatic ground-truth labels via *arr webhooks |
-| API surface | REST + bundled web UI | GraphQL + decoupled, read-only operator dashboard |
-| Data layer | Embedded storage, limited concurrency | Postgres-backed schema with connection pooling and migrations |
-| Governance | Dormant upstream (no commit since 2025-07) | Active 2026 fork with release cadence + security disclosure |
-
 ## Quick start
 
 Spin up BitAgent in under five minutes. Default authentication uses a simple API key.
