@@ -59,7 +59,7 @@ The most common cause is using `localhost` from inside Sonarr's container, where
 Check that the API Key field matches `TORZNAB_API_KEY` exactly. Whitespace and quotes are easy to fat-finger when copying from a `.env` file.
 
 **Search returns 0 results**
-Confirm that BitAgent has discovered torrents. In the BitAgent dashboard, the Library tab should show recent entries. If empty, see the [troubleshooting guide](../ops/troubleshooting.md) for DHT bootstrap diagnosis.
+Confirm that BitAgent has discovered torrents. In the BitAgent dashboard, the Library tab should show recent entries. If empty, check the DHT bootstrap configuration in your deployment.
 
 `[screenshot: sonarr-test-failed-401]`
 

@@ -49,7 +49,7 @@ After restart, **Add Indexer → Search "BitAgent"** and the bundled-style entry
 
 ## Path C: Upstream-bundled (future)
 
-We've drafted a PR for `Prowlarr/Indexers` that adds BitAgent to the official bundled list. Once merged, BitAgent appears as a first-class option in Prowlarr's "Add Indexer" search (no curl, no restart). Track status at [docs/integrations/prowlarr-pr-status.md](prowlarr-pr-status.md).
+We've drafted a PR for `Prowlarr/Indexers` that adds BitAgent to the official bundled list. Once merged, BitAgent appears as a first-class option in Prowlarr's "Add Indexer" search (no curl, no restart). Track status in the project issue tracker.
 
 The bundled definition uses the same wire format as the drop-in YAML — switching paths is purely cosmetic.
 

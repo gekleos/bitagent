@@ -56,7 +56,7 @@ BitAgent's caps endpoint declares `music-search` only when the classifier has at
 Verify by hand: `curl "https://bitagent.example.com/torznab?t=music&artist=Pink+Floyd&album=Animals&apikey=$KEY"`. If the XML returns 0 items, BitAgent hasn't crawled that release. If items return but Lidarr still shows 0, it's a category-filter mismatch — check that 3010/3020 are in your indexer config.
 
 **Quality Profile mis-matches**
-BitAgent's classifier emits format tags (MP3, FLAC, ALAC) into the Torznab `<info>` block. Lidarr maps these to its quality profile. If your custom Quality Profile expects "FLAC 24bit" specifically, the classifier may need a CEL rule extension to extract bit-depth tags — see [customization](../concepts/classifier.md).
+BitAgent's classifier emits format tags (MP3, FLAC, ALAC) into the Torznab `<info>` block. Lidarr maps these to its quality profile. If your custom Quality Profile expects "FLAC 24bit" specifically, the classifier may need a CEL rule extension to extract bit-depth tags — see the classifier customization guide.
 
 `[screenshot: lidarr-custom-formats]`
 
