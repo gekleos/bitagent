@@ -31,12 +31,15 @@ Prowlarr will sync the indexer to all connected *arr applications (Sonarr/Radarr
 If you prefer to import BitAgent the same way you import bundled trackers, place our YAML definition into Prowlarr's custom-definitions folder:
 
 ```bash
+
 # Path varies by deployment; for Docker:
+
 mkdir -p /config/Definitions/Custom
 curl -o /config/Definitions/Custom/bitagent.yml \
   https://raw.githubusercontent.com/gekleos/bitagent/main/examples/prowlarr/bitagent.yml
 
 # Restart Prowlarr to load the new definition
+
 docker compose restart prowlarr
 ```
 

@@ -71,13 +71,17 @@ The top of the dashboard shows DHT peer count, indexer throughput, and cache hit
 Validate the API endpoints before connecting Sonarr:
 
 ```bash
+
 # Dashboard healthcheck
+
 curl -s http://localhost:8080/healthz | jq .
 
 # Authenticated API ping
+
 curl -s "http://localhost:8080/api/me?apikey=$DASHBOARD_API_KEY" | jq .
 
 # Torznab capabilities
+
 curl -s "http://localhost:3333/torznab?t=caps&apikey=$TORZNAB_API_KEY" | head -20
 ```
 
