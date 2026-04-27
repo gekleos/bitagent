@@ -1,0 +1,22 @@
+BitAgent
+========
+
+This product was originally derived from `bitmagnet-io/bitmagnet`
+(https://github.com/bitmagnet-io/bitmagnet), which is licensed under
+the MIT License. A copy of that license is included in this
+distribution as LICENSE; it covers both the upstream code retained in
+this fork and the modifications made under the BitAgent project.
+
+Significant portions of the original `bitmagnet-io/bitmagnet` code are
+present here unmodified or near-unmodified. Significant portions are
+new work under the BitAgent project. We do not separate copyright
+lines per file — the project-level MIT License covers the combined
+work, and contribution attribution is tracked via git history.
+
+For license-compliance audits, the canonical statement is:
+
+  MIT License
+  Copyright (c) 2023 bitmagnet contributors
+  Copyright (c) 2026 BitAgent contributors
+
+Both copyrights are bound by the same MIT terms in LICENSE.
