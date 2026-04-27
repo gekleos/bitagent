@@ -14,14 +14,18 @@ Turn raw DHT noise into ground-truthed torrent metadata for your Sonarr and Rada
 Spin up BitAgent in under five minutes. Default authentication uses a simple API key.
 
 ```bash
+
 # Generate auth secrets
+
 DASHBOARD_API_KEY=$(openssl rand -hex 32)
 TORZNAB_API_KEY=$(openssl rand -hex 32)
 
 # Pull the compose file
+
 curl -O https://raw.githubusercontent.com/gekleos/bitagent/main/examples/compose.public.yml
 
 # Edit .env, then:
+
 docker compose -f compose.public.yml up -d
 ```
 

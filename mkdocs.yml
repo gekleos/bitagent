@@ -70,6 +70,9 @@ nav:
   - FAQ: faq.md
   - Concepts:
       - Architecture: concepts/architecture.md
+  - Dashboard:
+      - UI Guide: ui-guide.md
+      - API Reference: reference/dashboard-api.md
   - Integrations:
       - Sonarr: integrations/sonarr.md
       - Radarr: integrations/radarr.md

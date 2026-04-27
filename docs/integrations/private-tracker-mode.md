@@ -20,11 +20,14 @@ Export both values into your BitAgent environment. `TORZNAB_API_KEY` protects th
 Validate each gate independently before proceeding:
 
 ```bash
+
 # Torznab endpoint verification
+
 curl -H "Authorization: Bearer $(cat .env-TORZNAB_API_KEY)" \
   https://bitagent.example.com/torznab?t=caps
 
 # Dashboard verification
+
 curl "https://bitagent.example.com:8080/api/me?apikey=$(cat .env-DASHBOARD_API_KEY)"
 ```
 

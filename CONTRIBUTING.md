@@ -34,7 +34,9 @@ source .venv/bin/activate
 pip install -r requirements.txt -r requirements-dev.txt
 pip install -e .
 REQUIRE_AUTH=false python -m bitagent_ui
+
 # -> http://localhost:8080
+
 ```
 
 ### Running the test suite
@@ -59,20 +61,26 @@ CI runs the same invocations plus `golangci-lint run` and the build/push chain. 
 Every PR must include the following sections:
 
 ```markdown
+
 ## What changed
+
 <concise summary of the diff>
 
 ## Why
+
 <motivation: which issue, what symptom, what's the user story>
 
 ## Impact
+
 <who's affected, breaking changes, migration steps>
 
 ## Version
+
 <current> → <new> (<patch | minor | major>)
 Reason: <why this bump level>
 
 ## Test results
+
 <paste relevant `go test` / `pytest` output or attach evidence>
 ```
 
