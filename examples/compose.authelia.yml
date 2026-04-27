@@ -1,0 +1,123 @@
+# BitAgent — Behind Authelia + Traefik (forward-auth) deployment
+#
+# Use when:
+#   - you already operate Authelia (or oauth2-proxy / Keycloak with similar
+#     forward-auth semantics) and want bitagent-ui gated by that
+#   - operators sign in once at Authelia and the proxy injects identity headers
+#
+# Auth posture:
+#   - REQUIRE_AUTH=true
+#   - TRUST_FORWARDED_USER=true (trusts X-Forwarded-User from Traefik)
+#   - TRUST_NPM_HEADERS=false  (explicit; we only trust the forward-auth proxy)
+#   - DASHBOARD_API_KEY also set as a machine-client fallback
+#   - TLS terminated by Traefik via Let's Encrypt
+#
+# .env template:
+#   TRAEFIK_DOMAIN=example.com
+#   AUTHELIA_JWT_SECRET=<openssl rand -hex 32>
+#   AUTHELIA_SESSION_SECRET=<openssl rand -hex 32>
+#   AUTHELIA_STORAGE_ENCRYPTION_KEY=<openssl rand -hex 32>
+#   DASHBOARD_API_KEY=<openssl rand -hex 32>
+#   TORZNAB_API_KEY=<openssl rand -hex 32>
+#   POSTGRES_USER=bitagent
+#   POSTGRES_PASSWORD=<openssl rand -hex 16>
+#   POSTGRES_DB=bitagent
+
+services:
+  bitagent:
+    image: ghcr.io/gekleos/bitagent:latest
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable
+      TORZNAB_API_KEY: ${TORZNAB_API_KEY}
+    ports:
+      - "3333:3333"
+    networks: [internal]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  bitagent-ui:
+    image: ghcr.io/gekleos/bitagent-ui:latest
+    restart: unless-stopped
+    environment:
+      BITAGENT_GRAPHQL_URL: http://bitagent:3333/graphql
+      BITAGENT_METRICS_URL: http://bitagent:3333/metrics
+      REQUIRE_AUTH: "true"
+      TRUST_FORWARDED_USER: "true"
+      TRUST_NPM_HEADERS: "false"
+      DASHBOARD_API_KEY: ${DASHBOARD_API_KEY}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.bitagent.rule=Host(`bitagent.${TRAEFIK_DOMAIN}`)"
+      - "traefik.http.routers.bitagent.entrypoints=websecure"
+      - "traefik.http.routers.bitagent.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.bitagent.middlewares=authelia@docker"
+      - "traefik.http.services.bitagent.loadbalancer.server.port=8080"
+    networks: [internal, web]
+    depends_on: [bitagent]
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER}", "-d", "${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [internal]
+
+  authelia:
+    image: authelia/authelia:latest
+    restart: unless-stopped
+    environment:
+      AUTHELIA_JWT_SECRET: ${AUTHELIA_JWT_SECRET}
+      AUTHELIA_SESSION_SECRET: ${AUTHELIA_SESSION_SECRET}
+      AUTHELIA_STORAGE_ENCRYPTION_KEY: ${AUTHELIA_STORAGE_ENCRYPTION_KEY}
+    volumes:
+      - ./authelia:/config
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.authelia.rule=Host(`auth.${TRAEFIK_DOMAIN}`)"
+      - "traefik.http.routers.authelia.entrypoints=websecure"
+      - "traefik.http.routers.authelia.tls.certresolver=letsencrypt"
+      - "traefik.http.middlewares.authelia.forwardauth.address=http://authelia:9091/api/verify?rd=https://auth.${TRAEFIK_DOMAIN}"
+      - "traefik.http.middlewares.authelia.forwardauth.trustForwardHeader=true"
+      - "traefik.http.middlewares.authelia.forwardauth.authResponseHeaders=Remote-User,Remote-Groups,Remote-Email,Remote-Name,X-Forwarded-User,X-Forwarded-Email"
+      - "traefik.http.services.authelia.loadbalancer.server.port=9091"
+    networks: [internal, web]
+
+  traefik:
+    image: traefik:v3
+    restart: unless-stopped
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedByDefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.letsencrypt.acme.email=admin@${TRAEFIK_DOMAIN}"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+      - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik-letsencrypt:/letsencrypt
+    networks: [web]
+
+volumes:
+  postgres-data:
+  traefik-letsencrypt:
+
+networks:
+  internal:
+    driver: bridge
+  web:
+    external: true
