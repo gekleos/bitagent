@@ -1,6 +1,6 @@
 """GraphQL + Prometheus client for the BitAgent core.
 
-The core's GraphQL schema (bitagent / bitmagnet) exposes:
+The core's GraphQL schema exposes:
     version() -> String
     workers()
     health()
@@ -8,10 +8,9 @@ The core's GraphQL schema (bitagent / bitmagnet) exposes:
     torrent(infoHash)
     torrentContent { search(input: TorrentContentSearchQueryInput) }
 
-There is no `searchTorrents`, no `systemStats`, and no `listEvidenceEvents`
-in the upstream schema — those were placeholders in the public-release prep.
-This module wraps the real schema and derives the dashboard's stats from
-torrentContent.search aggregations + the Prometheus /metrics scrape.
+The dashboard derives system stats from torrentContent.search aggregations
+plus the Prometheus /metrics scrape — there is no single `systemStats`
+query.
 """
 
 from __future__ import annotations

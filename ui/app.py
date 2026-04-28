@@ -183,12 +183,11 @@ async def api_stats(identity: dict = Depends(require_auth)):
     misses = metric_sum.get("bitagent_classifier_llm_cache_misses_total", 0)
     cache_hit_ratio = (hits / (hits + misses)) if (hits + misses) > 0 else 0.0
 
-    # ── Liveness pipeline (counters emitted by the bitagent core's
-    # internal/evidence/liveness module — see the bitmagnet feat/liveness-
-    # blocklist). The core uses labelled counters: observations_total has
-    # {class,outcome} labels and revalidations_total has {outcome}. We sum
-    # across the orthogonal dimension(s) we don't care about. All values
-    # are 0 when the module is absent or disabled. ──
+    # ── Liveness pipeline. The core uses labelled counters:
+    # observations_total has {class,outcome} labels and revalidations_total
+    # has {outcome}. We sum across the orthogonal dimension(s) we don't care
+    # about. All values are 0 when the liveness module is absent or
+    # disabled. ──
     obs_alive = labeled_sum("bitagent_liveness_observations_total", 'class="alive"')
     obs_suspect = labeled_sum("bitagent_liveness_observations_total", 'class="suspect"')
     blacklist_size = int(metric_sum.get("bitagent_liveness_blacklist_size", 0))
