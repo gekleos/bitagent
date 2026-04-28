@@ -1,6 +1,25 @@
 # Legal Disclaimer
 
-**This document is for informational purposes only and does not constitute legal advice.** The authors, contributors, and maintainers of BitAgent (including primary maintainer `gekleos`) are not attorneys. All references to copyright, liability, jurisdiction, and compliance are derived from publicly available legal frameworks, established industry practice, and open-source networking standards. Operators are solely responsible for understanding and complying with the laws that apply to their jurisdiction, infrastructure, network configuration, and intended use case.
+**This document is for informational purposes only and does not constitute legal advice.** The authors, contributors, and maintainers of BitAgent are not attorneys. Operators are solely responsible for understanding and complying with all laws that apply to their jurisdiction, infrastructure, network configuration, and intended use.
+
+---
+
+## DISCLAIMER OF WARRANTIES AND LIMITATION OF LIABILITY
+
+**THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS, COPYRIGHT HOLDERS, CONTRIBUTORS, OR MAINTAINERS OF BITAGENT BE LIABLE FOR ANY CLAIM, DAMAGE, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE, MISUSE, OR INABILITY TO USE THE SOFTWARE.**
+
+**TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, THE AUTHORS AND MAINTAINERS OF BITAGENT EXPRESSLY DISCLAIM ALL LIABILITY FOR:**
+
+- **ANY ACT OF COPYRIGHT INFRINGEMENT, TRADEMARK INFRINGEMENT, OR VIOLATION OF ANY INTELLECTUAL PROPERTY RIGHT COMMITTED BY AN OPERATOR OR END USER OF THIS SOFTWARE;**
+- **ANY CLAIM BROUGHT BY A THIRD PARTY — INCLUDING RIGHTS HOLDERS, CONTENT OWNERS, COLLECTING SOCIETIES, OR GOVERNMENT AUTHORITIES — ARISING FROM THE OPERATOR'S USE OR DEPLOYMENT OF THIS SOFTWARE;**
+- **ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES ARISING FROM THE OPERATOR'S INDEXING, DOWNLOADING, REDISTRIBUTION, OR MAKING AVAILABLE OF ANY CONTENT;**
+- **ANY HARM RESULTING FROM THE OPERATOR'S FAILURE TO COMPLY WITH APPLICABLE COPYRIGHT, DATA PROTECTION, OR NETWORK REGULATION.**
+
+**THIS DISCLAIMER APPLIES REGARDLESS OF WHETHER SUCH LIABILITY IS BASED ON CONTRACT, TORT (INCLUDING NEGLIGENCE), STRICT LIABILITY, STATUTE, OR ANY OTHER LEGAL THEORY, AND REGARDLESS OF WHETHER THE AUTHORS HAVE BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.**
+
+The operator assumes full and exclusive responsibility for all actions taken with this software, including the selection, retrieval, redistribution, and storage of any content.
+
+---
 
 ## What BitAgent Is and Is Not
 
@@ -12,15 +31,15 @@
 
 ## Indexing Public DHT Metadata
 
-**Indexing publicly broadcast DHT metadata is widely recognized as lawful.** Courts and regulatory frameworks in multiple jurisdictions have consistently treated the indexing of publicly announced network data under the same principles that govern traditional search engines, library catalogs, and archival systems. The act of recording and cataloging metadata that a network voluntarily broadcasts does not constitute copyright infringement or secondary liability. This follows established safe-harbor frameworks and the legal precedent that an index or catalog is a neutral intermediary tool. An operator indexing public DHT announcements is legally analogous to a search engine indexing pages on pirate sites: the index itself carries no liability for the subsequent use of its entries; only the underlying content does.
+**Indexing publicly broadcast DHT metadata is widely recognized as lawful.** Courts and regulatory frameworks in multiple jurisdictions have consistently treated the indexing of publicly announced network data under the same principles that govern traditional search engines, library catalogs, and archival systems. The act of recording and cataloging metadata that a network voluntarily broadcasts does not constitute copyright infringement or secondary liability. An operator indexing public DHT announcements is legally analogous to a search engine indexing publicly available pages: the index itself carries no liability for the subsequent use of its entries.
 
 ## Downloading Content and Operator Responsibility
 
-**Downloading content is entirely separate from indexing metadata.** BitAgent does not download files. Any content retrieval is performed exclusively by the operator's own client. The lawfulness of downloading any specific file depends entirely on the operator, the jurisdiction, the nature of the content, and whether the operator holds the necessary rights or authorization. Many torrents are lawfully distributed; many are not. Operators assume full responsibility for verifying the legal status of any content they choose to retrieve. Running an indexer does not grant immunity for downstream downloads.
+**Downloading content is entirely separate from indexing metadata.** BitAgent does not download files. Any content retrieval is performed exclusively by the operator's own client. The lawfulness of downloading any specific file depends entirely on the operator, the jurisdiction, the nature of the content, and whether the operator holds the necessary rights or authorization. Many torrents are lawfully distributed; many are not. **Operators assume full and exclusive responsibility for verifying the legal status of any content they choose to retrieve.** Running an indexer does not grant immunity for downstream downloads.
 
 ## Copyright Takedown Procedures
 
-**BitAgent does not operate as a service provider and does not receive copyright notices on behalf of users.** Because BitAgent is self-hosted software, operators control their own indexes, network exposure, and data retention. If an operator receives a copyright infringement notice or wishes to remove specific data from their local index, they must handle the request internally. BitAgent provides operator-facing tools to forget and exclude specific infohashes from the local catalog via the dashboard and REST API. Operators should implement their own takedown procedures consistent with their jurisdiction's copyright regime. We do not mediate disputes, process third-party claims, or act as an intermediary for DMCA or equivalent notices.
+**BitAgent does not operate as a service provider and does not receive copyright notices on behalf of users.** Because BitAgent is self-hosted software, operators control their own indexes, network exposure, and data retention. If an operator receives a copyright infringement notice or wishes to remove specific data from their local index, they must handle the request internally. BitAgent provides operator-facing tools to remove specific infohashes from the local catalog via the dashboard and REST API (`/api/torrents/{infohash}/forget`). Operators should implement their own takedown procedures consistent with their jurisdiction's copyright regime. The authors do not mediate disputes, process third-party claims, or act as an intermediary for DMCA or equivalent notices.
 
 ## Data Protection and Privacy
 
@@ -32,25 +51,38 @@
 
 ## Recommendations for Operators
 
-**Operators should comply with local copyright and data protection laws.** Use BitAgent only with content you have a legal right to access or distribute. Maintain clear audit trails of your indexing and download practices, and implement reasonable takedown mechanisms where required. If your use case involves commercial aggregation, redistribution, large-scale processing of copyrighted material, or cross-border data routing, consult qualified legal counsel. Keep your indexer isolated from your primary download client, and configure firewall rules to restrict DHT exposure to your local network where operationally appropriate.
+**Comply with local copyright and data protection laws.** Use BitAgent only with content you have a legal right to access or distribute. Maintain clear audit trails of your indexing and download practices, and implement reasonable takedown mechanisms where required. If your use case involves commercial aggregation, redistribution, large-scale processing of copyrighted material, or cross-border data routing, consult qualified legal counsel.
+
+**Use a VPN or dedicated network interface for all DHT traffic — this is strongly recommended.** When your node participates in the BitTorrent DHT, your node's IP address is visible to every peer and monitoring entity that sweeps the swarm. Without network isolation, your real IP address is associated with DHT crawling activity. The authors strongly recommend:
+
+- Routing BitAgent's DHT traffic through a reputable VPN provider that supports port forwarding (Mullvad, AirVPN, ProtonVPN, and similar privacy-focused providers are commonly used) and does not log connection data.
+- Matching `BITAGENT_PEER_PORT` to the port-forwarded port assigned by your VPN provider for best DHT connectivity.
+- Keeping BitAgent on a dedicated VLAN, VM, or container network segment isolated from your primary devices.
+- Reviewing your VPN provider's Terms of Service and privacy policy before routing peer-to-peer traffic through their network.
+
+**Failure to use a VPN or network isolation means your real IP address participates in the DHT swarm.** This may expose you to monitoring by rights holders, anti-piracy agencies, or your ISP, regardless of whether you download any content. **The authors accept no liability for network exposure or consequences arising from an operator's choice not to use a VPN or equivalent network isolation.**
 
 ## Frequently Asked Questions
 
 **Can I run this on my home server?**
-Yes. Running BitAgent is lawful. Operators are responsible for complying with local copyright and network regulations for their own infrastructure.
+Yes. Running BitAgent is lawful in most jurisdictions. Operators are responsible for complying with local copyright and network regulations. We strongly recommend routing DHT traffic through a VPN — see above.
 
 **Will I get sued?**
-Running BitAgent itself carries no inherent legal risk. Legal exposure depends entirely on what content you download, how you use it, and your jurisdiction. The project does not guarantee immunity from third-party claims.
+Running BitAgent itself carries no inherent legal risk. Legal exposure depends entirely on what content you download, how you use it, and your jurisdiction. The project makes no guarantee of immunity from third-party claims.
 
 **Does the project endorse piracy?**
 No. The project endorses lawful indexing of publicly broadcast metadata and the continued development of open, standards-compliant networking tools.
 
-**What about my ISP/VPN?**
-This is out of scope for this documentation. Consult your ISP's Terms of Service, applicable privacy laws, and network security policies before routing traffic through third-party providers.
+**Do I need a VPN?**
+**Yes, we strongly recommend one.** Without a VPN, your real IP address participates in the BitTorrent DHT and is visible to other peers, including rights-holder monitoring services. Use a no-log VPN provider that supports port forwarding (Mullvad, AirVPN, ProtonVPN, etc.) and configure `BITAGENT_PEER_PORT` to match your assigned forwarded port. The authors accept no liability for consequences arising from operating without network isolation.
 
 **I received a DMCA notice — what do I do?**
-Handle notices internally. Use BitAgent's dashboard or API endpoint `/api/torrents/{infohash}/forget` to remove the specific infohash from your local index. Consult local counsel if your notice involves third-party claims or commercial liability.
+Handle notices internally. Use BitAgent's dashboard or API endpoint `/api/torrents/{infohash}/forget` to remove the specific infohash from your local index. Consult local counsel if your notice involves third-party claims or commercial liability. The authors are not a service provider under the DMCA and do not receive or process notices on your behalf.
 
 ## TL;DR
 
-**TL;DR:** BitAgent is a self-hosted metadata indexer for the public BitTorrent DHT, not a download client or content host. The BitTorrent protocol and the indexing of publicly broadcast network data are lawful in most jurisdictions. Downloading content is your responsibility and depends entirely on the file, your jurisdiction, and your rights to it. BitAgent does not receive copyright notices, store user data, or authorize unlawful conduct. Operators must comply with local law, implement their own takedown procedures, and consult counsel for commercial or high-risk use cases. This document is informational, not legal advice.
+**BitAgent is a self-hosted metadata indexer for the public BitTorrent DHT — not a download client or content host.** Indexing publicly broadcast network metadata is lawful in most jurisdictions. Downloading content is your responsibility and depends on the file, your jurisdiction, and your rights.
+
+**The authors accept no liability for copyright infringement, intellectual property claims, or any harm arising from your use of this software.** Operators bear full and exclusive responsibility for their own actions.
+
+**Use a VPN.** Without one, your real IP is visible in the DHT swarm.
