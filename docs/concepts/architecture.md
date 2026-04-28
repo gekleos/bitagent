@@ -72,4 +72,3 @@ Independent release cadences. The dashboard ships UI fixes in days; the indexer 
 **Sonarr requests an episode.** Sonarr's poll triggers `GET /torznab?t=tvsearch&q=...&season=...&ep=...&apikey=$KEY`. The adapter normalises params and queries the core's search graph against Postgres. Results are ranked by classifier confidence + evidence score + release freshness. Top matches serialise to Torznab XML; Sonarr selects, downloads, and emits an evidence webhook closing the feedback loop.
 
 **Operator changes a setting.** Dashboard form → `PUT /api/settings/overrides/<key>` (auth required). FastAPI validates the field is in the `MUTABLE_FIELDS` allowlist, writes to SQLite, appends an audit row. Next request reads the override via the custom `pydantic-settings` source — no restart.
-
