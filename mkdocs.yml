@@ -1,8 +1,8 @@
 site_name: BitAgent
 site_description: Self-hosted BitTorrent DHT crawler with native Sonarr/Radarr Torznab integration.
-site_url: https://gekleos.github.io/bitagent-staging/
-repo_url: https://github.com/gekleos/bitagent-staging
-repo_name: gekleos/bitagent-staging
+site_url: https://gekleos.github.io/bitagent/
+repo_url: https://github.com/gekleos/bitagent
+repo_name: gekleos/bitagent
 edit_uri: edit/main/docs/
 
 theme:
@@ -87,7 +87,7 @@ nav:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/gekleos/bitagent-staging
+      link: https://github.com/gekleos/bitagent
   generator: false
 
 copyright: |
