@@ -57,7 +57,7 @@ Use the Torznab Test sub-tab when `*arr` says "0 results" or "test failed" but y
 
 ### TV episode search
 
-```
+```text
 ?t=tvsearch&q=breaking+bad+s05e16&apikey=<TORZNAB_API_KEY>
 ```
 
@@ -65,7 +65,7 @@ Should return XML with `<item>` blocks for any matching releases.
 
 ### Movie by IMDb ID
 
-```
+```text
 ?t=movie&imdbid=tt0944947&apikey=<TORZNAB_API_KEY>
 ```
 
@@ -73,7 +73,7 @@ Note `imdbid` is the bare IMDb identifier *without* the `tt` prefix in some `*ar
 
 ### Music by artist + album
 
-```
+```text
 ?t=music&artist=Pink+Floyd&album=Animals&apikey=<TORZNAB_API_KEY>
 ```
 

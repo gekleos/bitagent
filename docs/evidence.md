@@ -10,7 +10,7 @@ BitAgent's classifier is initially heuristic — it scores torrents from name + 
 
 The fix is feedback. The full loop:
 
-```
+```text
 DHT firehose
   → classifier (heuristic admit/reject)
      → indexed Library
