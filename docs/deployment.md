@@ -44,7 +44,7 @@ End-to-end deployment of the BitAgent stack: the Go DHT crawler, the FastAPI das
 
 Three canonical shapes. Pick the one that matches your network topology.
 
-### `compose.tailnet.yml` — Tailscale or LAN-only
+### `compose.tailnet.yml` — private network or LAN-only
 
 No TLS, `REQUIRE_AUTH=false`. Safe **only** when the dashboard is unreachable from the public internet.
 
@@ -301,5 +301,5 @@ If the new version requires an env var or compose change, the release notes will
 - **Reusing one key for both endpoints** — different threat models, different rotation cadences. Don't.
 - **Public internet with `REQUIRE_AUTH=false`** — your dashboard becomes a free Torznab provider for anyone who finds it, plus an open settings-mutation surface. Don't.
 - **`TMDB_API_KEY` unset** — Library posters silently fall back to text. Not a bug, but ugly. Free tier is fine.
-- **Auto-update points to `:main` or `:latest`** — Apollo's docker daemon will sometimes serve stale digests. Pin the SHA.
+- **Auto-update points to `:main` or `:latest`** — the docker daemon will sometimes serve stale digests. Pin the SHA.
 - **Stack mounting `/data` on bind-mounts owned by root** — the dashboard's container user is `appuser` (uid 10001). Use a named volume, or `chown -R 10001 /your/host/path` first.

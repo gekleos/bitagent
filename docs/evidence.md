@@ -36,7 +36,7 @@ Same shape across Sonarr / Radarr / Lidarr / Readarr. Walk-through with Sonarr:
 5. **Triggers**: enable **On Grab**, **On Import (Existing File)**, **On Import (New File)**. Skip other triggers — they're noise.
 6. **Save**
 
-Click **Test** before saving. A 200 OK means the dashboard accepted the synthetic payload; check the dashboard's Recent Activity table — a synthetic test event should appear within a refresh tick. If you get a 401, see the [Authentication section of the UI Guide](ui-guide.md#authentication) — the webhook needs to either come from inside the trust zone (Tailscale / private LAN, with `REQUIRE_AUTH=false`) or carry the `DASHBOARD_API_KEY` as `?apikey=` in the URL.
+Click **Test** before saving. A 200 OK means the dashboard accepted the synthetic payload; check the dashboard's Recent Activity table — a synthetic test event should appear within a refresh tick. If you get a 401, see the [Authentication section of the UI Guide](ui-guide.md#authentication) — the webhook needs to either come from inside the trust zone (private network / private LAN, with `REQUIRE_AUTH=false`) or carry the `DASHBOARD_API_KEY` as `?apikey=` in the URL.
 
 Repeat for Radarr (`Settings → Connect`), Lidarr, and Readarr. URLs are identical; only the source application name on each event distinguishes them.
 

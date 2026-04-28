@@ -25,7 +25,7 @@ If this returns a connection refused, the core isn't running or the URL is wrong
 Verify `BITAGENT_GRAPHQL_URL`:
 
 - Same Docker network: `http://bitagent:3333/graphql`
-- Host network mode (Apollo-style): `http://127.0.0.1:3333/graphql`
+- Host network mode (host-network): `http://127.0.0.1:3333/graphql`
 - Compose-bridged: use the service name, not `localhost`.
 
 Restart the dashboard container after fixing.

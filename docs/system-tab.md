@@ -49,7 +49,7 @@ The **Run All Checks** button runs every Health Check probe synchronously and re
 - Container recreations where you've changed env vars.
 - Adding a reverse proxy / SSO gateway in front of the dashboard.
 
-Latency expectations: GraphQL and Metrics probes should be sub-50ms on localhost / Tailscale, sub-200ms across continents. Over 1s on any check usually means a timeout retry rather than slow latency — check the core's load.
+Latency expectations: GraphQL and Metrics probes should be sub-50ms on localhost / private LAN, sub-200ms across continents. Over 1s on any check usually means a timeout retry rather than slow latency — check the core's load.
 
 ## Torznab Test recipes
 
