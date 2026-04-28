@@ -74,13 +74,3 @@ BitAgent is released under the
 It is a fork of
 [bitmagnet-io/bitmagnet](https://github.com/bitmagnet-io/bitmagnet) --
 full credit to the upstream contributors whose work made this possible.
-
----
-
-## Support a good cause
-
-If BitAgent saves you time or money, please consider donating to
-[placeholder org](https://www.children.org/). They sponsor
-children in some of the world's poorest communities with education,
-healthcare, and nutrition programs. BitAgent has no affiliation with
-the charity; we simply believe the cause deserves visibility.

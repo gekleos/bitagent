@@ -16,7 +16,7 @@ The interface is a left **sidebar** + top **header bar** + scrollable **main con
 - **OPERATIONS** — Wants, Evidence
 - **SYSTEM** — Settings, System
 
-A coral "Please donate to placeholder org" banner sits at the top of the sidebar nav. The sidebar footer carries a **Dark mode** toggle (persists to `localStorage`) and a user avatar that renders the first letter of the authenticated `display` name with the auth method label below it. The wordmark in the top-left shows `BitAgent` and `v1.0.0`.
+The sidebar footer carries a **Dark mode** toggle (persists to `localStorage`) and a user avatar that renders the first letter of the authenticated `display` name with the auth method label below it. The wordmark in the top-left shows `BitAgent` and `v1.0.0`.
 
 The header strip carries three controls in the top-right:
 
