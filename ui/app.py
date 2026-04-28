@@ -6,13 +6,15 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, Depends, HTTPException, Query
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from config import settings, MUTABLE_FIELDS
 from auth import require_auth
 from database import (
-    get_db, get_all_overrides, set_override, get_audit_log,
+    get_db,
+    get_all_overrides,
+    set_override,
+    get_audit_log,
     delete_override,
 )
 import graphql_client as gql
@@ -22,6 +24,7 @@ import tmdb
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     from database import get_db
+
     await get_db()
     yield
 
@@ -44,12 +47,14 @@ templates = Jinja2Templates(directory=BASE / "templates")
 
 # ── Health ────────────────────────────────────────────────────────────
 
+
 @app.get("/healthz")
 async def healthz():
     return {"status": "ok", "ts": time.time()}
 
 
 # ── Auth ──────────────────────────────────────────────────────────────
+
 
 @app.get("/api/me")
 async def me(identity: dict = Depends(require_auth)):
@@ -58,14 +63,21 @@ async def me(identity: dict = Depends(require_auth)):
 
 # ── Dashboard page ────────────────────────────────────────────────────
 
+
 @app.get("/")
 async def dashboard(request: Request, identity: dict = Depends(require_auth)):
-    return templates.TemplateResponse("index.html", {
-        "request": request, "identity": identity, "active_tab": "dashboard",
-    })
+    return templates.TemplateResponse(
+        "index.html",
+        {
+            "request": request,
+            "identity": identity,
+            "active_tab": "dashboard",
+        },
+    )
 
 
 # ── API: System stats ────────────────────────────────────────────────
+
 
 @app.get("/api/stats")
 async def api_stats(identity: dict = Depends(require_auth)):
@@ -181,8 +193,12 @@ async def api_stats(identity: dict = Depends(require_auth)):
     obs_suspect = labeled_sum("bitagent_liveness_observations_total", 'class="suspect"')
     blacklist_size = int(metric_sum.get("bitagent_liveness_blacklist_size", 0))
     excluded_total = metric_sum.get("bitagent_liveness_torznab_excluded_total", 0)
-    revalid_alive = labeled_sum("bitagent_liveness_revalidations_total", 'outcome="alive_again"')
-    revalid_dead = labeled_sum("bitagent_liveness_revalidations_total", 'outcome="still_dead"')
+    revalid_alive = labeled_sum(
+        "bitagent_liveness_revalidations_total", 'outcome="alive_again"'
+    )
+    revalid_dead = labeled_sum(
+        "bitagent_liveness_revalidations_total", 'outcome="still_dead"'
+    )
 
     # Block rate: how often the Torznab filter is dropping a stale infohash.
     block_rate_per_min = int(rate_per_min("bitagent_liveness_torznab_excluded_total"))
@@ -198,7 +214,9 @@ async def api_stats(identity: dict = Depends(require_auth)):
     # % came back to life (signal that our threshold isn't tuned right if
     # this number is high — we're killing torrents that recover).
     revalid_total = revalid_alive + revalid_dead
-    revalid_recovery_rate = (revalid_alive / revalid_total) if revalid_total > 0 else 0.0
+    revalid_recovery_rate = (
+        (revalid_alive / revalid_total) if revalid_total > 0 else 0.0
+    )
 
     # Local SQLite: evidence count (degrade gracefully if table is missing)
     total_evidence = 0
@@ -255,6 +273,7 @@ async def api_metrics(identity: dict = Depends(require_auth)):
 
 # ── API: Library / Torrents ───────────────────────────────────────────
 
+
 @app.get("/api/torrents")
 async def api_torrents(
     q: str = "",
@@ -288,7 +307,7 @@ async def api_torrents(
     excluded_count = 0
     for it in block.get("items") or []:
         torrent = it.get("torrent") or {}
-        title = (it.get("title") or torrent.get("name") or "")
+        title = it.get("title") or torrent.get("name") or ""
         title_lower = title.lower()
         matched_phrase_id = None
         for bp in block_phrases:
@@ -299,20 +318,22 @@ async def api_torrents(
             await _bump_block_phrase_hit(matched_phrase_id)
             excluded_count += 1
             continue
-        items.append({
-            "infoHash": it.get("infoHash"),
-            "name": title,
-            "title": it.get("title"),
-            "size": torrent.get("size") or 0,
-            "filesCount": torrent.get("filesCount") or 0,
-            "seeders": it.get("seeders") or 0,
-            "leechers": it.get("leechers") or 0,
-            "contentType": it.get("contentType"),
-            "contentSource": it.get("contentSource"),
-            "contentId": it.get("contentId"),
-            "discoveredAt": it.get("createdAt"),
-            "updatedAt": it.get("updatedAt"),
-        })
+        items.append(
+            {
+                "infoHash": it.get("infoHash"),
+                "name": title,
+                "title": it.get("title"),
+                "size": torrent.get("size") or 0,
+                "filesCount": torrent.get("filesCount") or 0,
+                "seeders": it.get("seeders") or 0,
+                "leechers": it.get("leechers") or 0,
+                "contentType": it.get("contentType"),
+                "contentSource": it.get("contentSource"),
+                "contentId": it.get("contentId"),
+                "discoveredAt": it.get("createdAt"),
+                "updatedAt": it.get("updatedAt"),
+            }
+        )
     return {
         "totalCount": (block.get("totalCount") or 0) - excluded_count,
         "items": items,
@@ -330,7 +351,13 @@ async def _load_block_phrases() -> list[dict]:
     rows = await cur.fetchall()
     await cur.close()
     return [
-        {"id": r[0], "pattern": (r[1] or "").lower(), "scope": r[2], "note": r[3] or "", "hits": r[4]}
+        {
+            "id": r[0],
+            "pattern": (r[1] or "").lower(),
+            "scope": r[2],
+            "note": r[3] or "",
+            "hits": r[4],
+        }
         for r in rows
     ]
 
@@ -348,7 +375,9 @@ async def api_torrent_detail(info_hash: str, identity: dict = Depends(require_au
     result = await gql.query(gql.TORRENT_DETAIL, {"infoHash": info_hash})
     data = result.get("data") or {}
     torrents = data.get("torrent") or []
-    content = ((data.get("torrentContent") or {}).get("search") or {}).get("items") or []
+    content = ((data.get("torrentContent") or {}).get("search") or {}).get(
+        "items"
+    ) or []
     if not torrents and not content:
         raise HTTPException(404, "Torrent not found")
     t = torrents[0] if torrents else {}
@@ -369,6 +398,7 @@ async def api_torrent_detail(info_hash: str, identity: dict = Depends(require_au
 
 # ── API: Evidence ─────────────────────────────────────────────────────
 
+
 @app.get("/api/evidence")
 async def api_evidence(
     limit: int = Query(50, ge=1, le=500),
@@ -383,6 +413,7 @@ async def api_evidence(
 
 
 # ── API: Wants ────────────────────────────────────────────────────────
+
 
 class WantCreate(BaseModel):
     title: str
@@ -407,9 +438,17 @@ async def api_wants(identity: dict = Depends(require_auth)):
         "FROM wants ORDER BY priority DESC, created_at DESC"
     )
     return [
-        {"id": r[0], "title": r[1], "content_type": r[2], "query": r[3],
-         "status": r[4], "priority": r[5], "created_at": r[6],
-         "updated_at": r[7], "notes": r[8]}
+        {
+            "id": r[0],
+            "title": r[1],
+            "content_type": r[2],
+            "query": r[3],
+            "status": r[4],
+            "priority": r[5],
+            "created_at": r[6],
+            "updated_at": r[7],
+            "notes": r[8],
+        }
         for r in rows
     ]
 
@@ -421,14 +460,24 @@ async def api_create_want(want: WantCreate, identity: dict = Depends(require_aut
     cursor = await db.execute(
         "INSERT INTO wants (title, content_type, query, priority, notes, status, created_at, updated_at) "
         "VALUES (?, ?, ?, ?, ?, 'active', ?, ?)",
-        (want.title, want.content_type, want.query, want.priority, want.notes, now, now),
+        (
+            want.title,
+            want.content_type,
+            want.query,
+            want.priority,
+            want.notes,
+            now,
+            now,
+        ),
     )
     await db.commit()
     return {"id": cursor.lastrowid, "status": "created"}
 
 
 @app.put("/api/wants/{want_id}")
-async def api_update_want(want_id: int, update: WantUpdate, identity: dict = Depends(require_auth)):
+async def api_update_want(
+    want_id: int, update: WantUpdate, identity: dict = Depends(require_auth)
+):
     db = await get_db()
     fields, values = [], []
     for k, v in update.model_dump(exclude_none=True).items():
@@ -453,6 +502,7 @@ async def api_delete_want(want_id: int, identity: dict = Depends(require_auth)):
 
 # ── API: Settings ─────────────────────────────────────────────────────
 
+
 class SettingUpdate(BaseModel):
     value: str
 
@@ -472,7 +522,9 @@ async def api_settings(identity: dict = Depends(require_auth)):
 
 
 @app.put("/api/settings/overrides/{key}")
-async def api_set_override(key: str, body: SettingUpdate, identity: dict = Depends(require_auth)):
+async def api_set_override(
+    key: str, body: SettingUpdate, identity: dict = Depends(require_auth)
+):
     if key not in MUTABLE_FIELDS:
         raise HTTPException(403, f"Field '{key}' is not mutable")
     result = await set_override(key, body.value, actor=identity.get("id", "unknown"))
@@ -499,6 +551,7 @@ async def api_audit(
 
 # ── API: Notifications ────────────────────────────────────────────────
 
+
 @app.get("/api/notifications")
 async def api_notifications(identity: dict = Depends(require_auth)):
     db = await get_db()
@@ -506,7 +559,14 @@ async def api_notifications(identity: dict = Depends(require_auth)):
         "SELECT id, level, title, message, read, created_at FROM notifications ORDER BY created_at DESC LIMIT 50"
     )
     return [
-        {"id": r[0], "level": r[1], "title": r[2], "message": r[3], "read": bool(r[4]), "at": r[5]}
+        {
+            "id": r[0],
+            "level": r[1],
+            "title": r[2],
+            "message": r[3],
+            "read": bool(r[4]),
+            "at": r[5],
+        }
         for r in rows
     ]
 
@@ -521,6 +581,7 @@ async def api_mark_read(nid: int, identity: dict = Depends(require_auth)):
 
 # ── API: TMDB poster ─────────────────────────────────────────────────
 
+
 @app.get("/api/poster/{tmdb_id}")
 async def api_poster(tmdb_id: str, media_type: str = "movie"):
     data = await tmdb.get_poster(tmdb_id, media_type)
@@ -530,6 +591,7 @@ async def api_poster(tmdb_id: str, media_type: str = "movie"):
 
 
 # ── API: GraphQL passthrough (for explorer) ───────────────────────────
+
 
 class GQLRequest(BaseModel):
     query: str
@@ -542,6 +604,7 @@ async def api_graphql_proxy(body: GQLRequest, identity: dict = Depends(require_a
 
 
 # ── API: Filters status (read-only view of bitagent core contentfilter) ──
+
 
 @app.get("/api/filters/status")
 async def api_filters_status(identity: dict = Depends(require_auth)):
@@ -566,11 +629,11 @@ async def api_filters_status(identity: dict = Depends(require_auth)):
         bare = key.split("{", 1)[0]
         metric_sum[bare] = metric_sum.get(bare, 0.0) + v
         # Parse out specific labels we care about
-        if bare == "bitagent_contentfilter_blocked_ext_total" and "ext=\"" in key:
-            ext = key.split("ext=\"", 1)[1].split("\"", 1)[0]
+        if bare == "bitagent_contentfilter_blocked_ext_total" and 'ext="' in key:
+            ext = key.split('ext="', 1)[1].split('"', 1)[0]
             blocked_ext[ext] = int(v)
-        if bare == "bitagent_contentfilter_drop_total" and "reason=\"" in key:
-            reason = key.split("reason=\"", 1)[1].split("\"", 1)[0]
+        if bare == "bitagent_contentfilter_drop_total" and 'reason="' in key:
+            reason = key.split('reason="', 1)[1].split('"', 1)[0]
             drop_reason[reason] = int(v)
 
     return {
@@ -585,7 +648,9 @@ async def api_filters_status(identity: dict = Depends(require_auth)):
             for ext in sorted(blocked_ext.keys(), key=lambda k: -blocked_ext[k])
         ],
         "csam": {
-            "blocklistEntries": int(metric_sum.get("bitagent_csam_blocklist_entries", 0)),
+            "blocklistEntries": int(
+                metric_sum.get("bitagent_csam_blocklist_entries", 0)
+            ),
             "lookups": int(metric_sum.get("bitagent_csam_blocklist_lookups_total", 0)),
             "exports": int(metric_sum.get("bitagent_csam_blocklist_export_total", 0)),
         },
@@ -593,6 +658,7 @@ async def api_filters_status(identity: dict = Depends(require_auth)):
 
 
 # ── API: Operator block phrases (CRUD) ───────────────────────────────
+
 
 class BlockPhrasePayload(BaseModel):
     pattern: str
@@ -662,10 +728,12 @@ async def api_block_phrases_delete(
 
 # ── API: Demo data seeder ─────────────────────────────────────────────
 
+
 @app.post("/api/seed-demo")
 async def api_seed_demo(identity: dict = Depends(require_auth)):
     """Populate the dashboard with realistic demo data for presentation."""
     import random
+
     db = await get_db()
 
     # Seed wants
@@ -681,30 +749,66 @@ async def api_seed_demo(identity: dict = Depends(require_auth)):
     ]
     now = time.time()
     for title, ct, query, prio in demo_wants:
-        existing = await db.execute_fetchall("SELECT id FROM wants WHERE title = ?", (title,))
+        existing = await db.execute_fetchall(
+            "SELECT id FROM wants WHERE title = ?", (title,)
+        )
         if not existing:
             created = now - random.randint(3600, 86400 * 14)
             await db.execute(
                 "INSERT INTO wants (title, content_type, query, priority, notes, status, created_at, updated_at) "
                 "VALUES (?, ?, ?, ?, '', ?, ?, ?)",
-                (title, ct, query, prio, random.choice(["active", "active", "active", "paused"]), created, created),
+                (
+                    title,
+                    ct,
+                    query,
+                    prio,
+                    random.choice(["active", "active", "active", "paused"]),
+                    created,
+                    created,
+                ),
             )
 
     # Seed notifications
     demo_notifs = [
         ("info", "DHT Bootstrap Complete", "Routing table initialized with 847 peers."),
-        ("success", "Evidence Pipeline Active", "Sonarr webhook endpoint registered and receiving events."),
-        ("warning", "High DHT Churn", "Peer table turnover exceeded 15% in the last hour."),
+        (
+            "success",
+            "Evidence Pipeline Active",
+            "Sonarr webhook endpoint registered and receiving events.",
+        ),
+        (
+            "warning",
+            "High DHT Churn",
+            "Peer table turnover exceeded 15% in the last hour.",
+        ),
         ("info", "Classifier Updated", "CEL rule chain reloaded with 23 active rules."),
-        ("success", "New Release Indexed", "Dune Part Two (2024) 2160p UHD BluRay matched with 94% confidence."),
+        (
+            "success",
+            "New Release Indexed",
+            "Dune Part Two (2024) 2160p UHD BluRay matched with 94% confidence.",
+        ),
         ("info", "Retention Sweep", "Purged 1,247 stale torrents older than 90 days."),
-        ("warning", "Rate Limit Warning", "Approaching TMDB API rate limit (38/40 requests/10s)."),
-        ("success", "Wantbridge Match", "Breaking Bad S05E16 matched via DHT direct seeder query."),
+        (
+            "warning",
+            "Rate Limit Warning",
+            "Approaching TMDB API rate limit (38/40 requests/10s).",
+        ),
+        (
+            "success",
+            "Wantbridge Match",
+            "Breaking Bad S05E16 matched via DHT direct seeder query.",
+        ),
         ("info", "Metrics Export", "Prometheus scrape latency nominal at 12ms."),
-        ("success", "Radarr Grab Confirmed", "Oppenheimer (2023) grab webhook confirmed by evidence pipeline."),
+        (
+            "success",
+            "Radarr Grab Confirmed",
+            "Oppenheimer (2023) grab webhook confirmed by evidence pipeline.",
+        ),
     ]
     for level, title, message in demo_notifs:
-        existing = await db.execute_fetchall("SELECT id FROM notifications WHERE title = ?", (title,))
+        existing = await db.execute_fetchall(
+            "SELECT id FROM notifications WHERE title = ?", (title,)
+        )
         if not existing:
             await db.execute(
                 "INSERT INTO notifications (level, title, message, read, created_at) VALUES (?, ?, ?, ?, ?)",
@@ -716,7 +820,12 @@ async def api_seed_demo(identity: dict = Depends(require_auth)):
         ("log_level", "info", "debug", "operator"),
         ("tmdb_api_key", None, "abc***redacted", "operator"),
         ("trust_forwarded_user", "false", "true", "admin"),
-        ("bitagent_graphql_url", "http://localhost:3333/graphql", "http://bitagent:3333/graphql", "operator"),
+        (
+            "bitagent_graphql_url",
+            "http://localhost:3333/graphql",
+            "http://bitagent:3333/graphql",
+            "operator",
+        ),
         ("log_level", "debug", "info", "operator"),
     ]
     for key, old, new, actor in demo_audits:
@@ -730,9 +839,14 @@ async def api_seed_demo(identity: dict = Depends(require_auth)):
             )
 
     await db.commit()
-    return {"status": "seeded", "wants": len(demo_wants), "notifications": len(demo_notifs)}
+    return {
+        "status": "seeded",
+        "wants": len(demo_wants),
+        "notifications": len(demo_notifs),
+    }
 
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run("app:app", host=settings.host, port=settings.port, reload=True)

@@ -127,7 +127,7 @@ Mismatched or missing token → request rejected, no row written, increments `bi
 ### `TORZNAB_API_KEY`
 
 1. Generate the new key: `openssl rand -hex 32`.
-2. Update `TORZNAB_API_KEY` in the BitAgent env (`.env` file or secrets manager), restart the BitAgent container.
+2. Update `TORZNAB_API_KEY` in the BitAgent env (`.env` file or secrets store), restart the BitAgent container.
 3. Update each `*arr` indexer's API Key field to the new value.
 4. Test each indexer connection.
 5. The old key is now dead — no need to retire it explicitly.

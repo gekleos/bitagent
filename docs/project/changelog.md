@@ -14,7 +14,7 @@ The first publicly-shipped BitAgent release. Sidebar UI complete, real-data inte
 
 **Highlights.** This is the cut where BitAgent transitions from advanced tooling to a public release. The dashboard's six-tab sidebar layout, the public-quickstart compose file, and the docs site all date from this version.
 
-## v1.17 — 2026-04-26 — Quality evidence baseline
+## v1.17.0 — 2026-04-26 — Quality evidence baseline
 
 Production-deployed cut where the first end-to-end quality measurements were captured. Used as the reference baseline for the BEP-9 and wantbridge improvement workstreams.
 
@@ -40,7 +40,7 @@ Four large branches landed in one cut. Defaults are conservative; live-apply fla
 
 Below are the change sets that landed under the old `bitmagnet` name during the fork-establishment + divergence phase. Retained for context; not actionable for upgraders.
 
-### 2026-04-24 — Phase 2 rebrand: Prometheus namespace
+### 2026-04-24 — Prometheus namespace rebrand
 
 Metric namespace migrated from `bitmagnet_*` to `bitagent_*` with a dual-emit window so legacy dashboards keep working.
 
@@ -51,14 +51,13 @@ Metric namespace migrated from `bitmagnet_*` to `bitagent_*` with a dual-emit wi
 
 **Cost.** ~2× map lookups + atomic increments per observation. Negligible vs the DHT socket and DB write that dominate the request path.
 
-### 2026-04-24 — Rebrand: gekleos/bitmagnet → gekleos/bitagent
+### 2026-04-24 — Rebrand: bitmagnet → bitagent
 
 - Go module path: `github.com/bitmagnet-io/bitmagnet` → `github.com/gekleos/bitagent`
 - Binary name: `bitmagnet` → `bitagent`
 - DHT client ID suffix on the wire: `-BM0001-` → `-BA0001-`
 - CLI app name flip
 - `UPSTREAM_DIFF.md` → `HISTORY.md`
-- Container registry path stays `gekleos/bitmagnet` due to GitLab refusing project rename when the registry is non-empty (would have destroyed 13 historical image tags). Build artefact is a BitAgent binary; only the storage path keeps the legacy name.
 
 **Deliberately not changed in Phase 1.** Postgres default DB name (`bitmagnet`), XDG config path (`~/.config/bitmagnet/config.yml`), and protobuf internal package name. All have separate-migration cost reasons.
 

@@ -94,7 +94,7 @@ The default predicate is conservative: no canonical label, no evidence record, a
 
 ## Evidence-source ingestors (advanced)
 
-These variables configure pollers for downstream `*arr` apps and qBittorrent. They are present in the advanced `deploy/docker-compose.yml` (host Portainer stack), **not** in `examples/docker-compose.public.yml`. Empty values disable the corresponding source without error — the worker logs `no X instances configured` and idles.
+These variables configure pollers for downstream `*arr` apps and qBittorrent. They are present in the advanced `deploy/docker-compose.yml`, **not** in `examples/docker-compose.public.yml`. Empty values disable the corresponding source without error — the worker logs `no X instances configured` and idles.
 
 | Variable | Default | Purpose |
 |---|---|---|

@@ -53,7 +53,7 @@ For Sybil resistance, the 20-byte node ID is hardened per BEP-42: it's derived f
 
 DHT discovery is outbound-dominant — the crawler initiates almost every conversation. Behind a NAT or VPN with no inbound port forward, BitAgent still works. You'll see a marginally lower BEP-9 fetch success rate (some peers won't be reachable for the metainfo handshake) but the crawl itself proceeds.
 
-If you're running behind a VPN that supports port forwarding (Mullvad, AirVPN, Proton, etc.), enabling the forward and matching `BITAGENT_PEER_PORT` to the forwarded port restores peer symmetry. Operator-internal host deployments do this; the public quickstart does not.
+If you're running behind a VPN that supports port forwarding (Mullvad, AirVPN, Proton, etc.), enabling the forward and matching `BITAGENT_PEER_PORT` to the forwarded port restores peer symmetry. Operator-internal deployments with port forwarding do this; the public quickstart does not.
 
 ## Failure modes
 
