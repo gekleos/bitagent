@@ -1,603 +1,131 @@
 # Dashboard UI Guide
 
-BitAgent ships a self-contained operator dashboard built on FastAPI and vanilla
-JavaScript. The dashboard is the primary interface for monitoring indexer health,
-browsing your torrent library, managing search targets, reviewing evidence
-events, and configuring runtime settings. This guide covers installation,
-authentication, every tab in detail, keyboard shortcuts, and theming.
+![Dashboard](assets/screenshots/tab-dashboard.png)
 
-## Dashboard overview
+## Overview
 
-The dashboard (`bitagent-ui`) is a thin presentation layer that communicates
-with the BitAgent core via its GraphQL API and maintains a local SQLite sidecar
-for operator overrides, audit logging, and poster caching. It never mutates
-indexing data directly — all structural changes flow through the GraphQL API.
+The BitAgent v1.0.0 dashboard is the operator surface for the DHT crawler — live metrics, indexed catalogue, operator-defined search targets, *arr feedback, runtime configuration, and diagnostics, all in a single page. It is read-mostly: heavy mutations (settings overrides, want CRUD) are persisted to a local SQLite sidecar; everything else streams from the BitAgent core's GraphQL and Prometheus endpoints.
 
-Six primary tabs organize the interface:
+Use the dashboard for: confirming the crawler is healthy, telling BitAgent what content you actually want via Wants, verifying that *arr import webhooks are reaching the evidence pipeline, and troubleshooting connectivity from the System tab. The dashboard never bypasses the core — every change you make is via documented endpoints, so anything you can do here you can also script with `curl`.
 
-1. **Dashboard** — real-time stat cards, category breakdown, system health
-   indicators, and an activity feed.
-2. **Library** — poster grid or list view of indexed torrents with search,
-   filters, and a detail modal.
-3. **Wants** — operator-defined search targets with priority and status
-   management.
-4. **Evidence** — webhook event log showing how *arr feedback flows back into
-   the classifier.
-5. **Settings** — six sub-tabs covering configuration, auth, integrations,
-   retention, classifier tuning, and audit history.
-6. **System** — health checks, Torznab endpoint tester, GraphQL explorer, and
-   raw Prometheus metrics.
+## Layout
 
-## Installation
+The interface is a left **sidebar** + top **header bar** + scrollable **main content area**. The sidebar is grouped:
 
-### Prerequisites
+- **OVERVIEW** — Dashboard, Library
+- **OPERATIONS** — Wants, Evidence
+- **SYSTEM** — Settings, System
 
-- Docker 24.0+ and Docker Compose v2.24+
-- A running BitAgent core instance with its GraphQL API accessible
-- At least 512 MB RAM allocated to the dashboard container
-- Network connectivity between the dashboard and the BitAgent core
+A coral "Please donate to Children's International" banner sits at the top of the sidebar nav. The sidebar footer carries a **Dark mode** toggle (persists to `localStorage`) and a user avatar that renders the first letter of the authenticated `display` name with the auth method label below it. The wordmark in the top-left shows `BitAgent` and `v1.0.0`.
 
-### Docker Compose setup
+The header strip carries three controls in the top-right:
 
-The standard deployment bundles the dashboard alongside the core. Retrieve the
-compose file and create an environment file:
-
-```bash
-curl -O https://raw.githubusercontent.com/gekleos/bitagent/main/examples/compose.public.yml
-```
-
-Create a `.env` file with the minimum required variables:
-
-```env
-DASHBOARD_API_KEY=$(openssl rand -hex 32)
-TORZNAB_API_KEY=$(openssl rand -hex 32)
-BITAGENT_GRAPHQL_URL=http://bitagent:3333/graphql
-BITAGENT_METRICS_URL=http://bitagent:3333/metrics
-POSTGRES_DB=bitagent
-POSTGRES_USER=bitagent
-POSTGRES_PASSWORD=<strong_password>
-```
-
-Deploy:
-
-```bash
-docker compose -f compose.public.yml up -d
-```
-
-Wait approximately 3 minutes for the DHT bootstrap to complete, then open
-`http://localhost:8080` in your browser.
-
-### First run
-
-On first load the dashboard displays a one-time confirmation banner showing the
-active `DASHBOARD_API_KEY`. Copy this value to your password manager. The
-banner does not reappear after dismissal.
-
-The dashboard creates its SQLite sidecar at `/data/bitagent-ui.db` on first
-boot. This file stores operator overrides, audit log entries, and cached TMDB
-poster URLs. Back up this file alongside your Postgres dumps if you want to
-preserve settings and audit history across migrations.
-
-## Configuration
-
-All dashboard behavior is controlled via environment variables passed to the
-`bitagent-ui` container. The table below documents every supported variable.
-
-### Core connection
-
-| Variable | Default | Description |
-|---|---|---|
-| `BITAGENT_GRAPHQL_URL` | `http://bitagent:3333/graphql` | Full URL to the BitAgent core GraphQL endpoint. The dashboard routes all data fetches through this URL. |
-| `BITAGENT_METRICS_URL` | `http://bitagent:3333/metrics` | Prometheus metrics endpoint on the core. Powers the System tab gauges and the Dashboard stat cards. |
-
-### Authentication
-
-| Variable | Default | Description |
-|---|---|---|
-| `REQUIRE_AUTH` | `true` | Master toggle. Set to `false` to disable all authentication (use only on fully isolated networks). |
-| `DASHBOARD_API_KEY` | *(none)* | Primary API key for dashboard access. Validated via `Authorization: Bearer <key>` header or `?apikey=<key>` query parameter. |
-| `TORZNAB_API_KEY` | *(none)* | Separate key for the Torznab endpoint. Keeps dashboard and indexer auth independent for rotation safety. |
-| `TRUST_NPM_HEADERS` | `false` | When `true`, trusts `X-Auth-User-Id` and `X-Auth-User-Email` headers injected by Nginx Proxy Manager or similar reverse proxies. |
-| `TRUST_FORWARDED_USER` | `false` | When `true`, trusts the `X-Forwarded-User` header for generic reverse-proxy SSO setups (Authelia, Authentik, etc.). |
-| `SSO_COOKIE_NAME` | *(none)* | Cookie name to read for SSO session validation. The dashboard decodes the cookie value as a signed JWT or opaque token depending on your SSO provider. |
-
-### Integrations
-
-| Variable | Default | Description |
-|---|---|---|
-| `TMDB_API_KEY` | *(none)* | Optional. Enables poster art fetching from TMDB for the Library tab. Leave empty to disable external poster lookups entirely. Cached in the SQLite sidecar for 7 days. |
-
-### Logging
-
-| Variable | Default | Description |
-|---|---|---|
-| `LOG_LEVEL` | `info` | Controls dashboard log verbosity. Accepted values: `debug`, `info`, `warn`, `error`. Set to `debug` to trace auth resolver decisions and GraphQL query timing. |
-
-## Authentication
-
-The dashboard implements a 4-tier authentication resolver that evaluates
-credentials in strict priority order. The first tier that produces a valid
-identity wins; subsequent tiers are skipped.
-
-### Tier 1: API key
-
-The highest-priority resolver. Checks for `DASHBOARD_API_KEY` in the
-`Authorization: Bearer <key>` header or the `?apikey=<key>` query parameter.
-Validation uses constant-time comparison to prevent timing attacks. When
-matched, the request identity resolves to `api-client` with full dashboard
-access.
-
-This is the default and recommended authentication method for most deployments.
-It requires no reverse proxy, no SSO provider, and integrates natively with
-*arr client token fields.
-
-### Tier 2: Reverse-proxy headers (NPM)
-
-Activated when `TRUST_NPM_HEADERS=true`. Reads `X-Auth-User-Id` and
-`X-Auth-User-Email` headers injected by Nginx Proxy Manager after its own
-authentication flow. The dashboard trusts these headers unconditionally when
-enabled, so only activate this tier behind a proxy you fully control.
-
-The resolved identity uses the header values directly — the user ID becomes the
-audit actor, and the email populates the Settings audit log.
-
-### Tier 3: Forwarded user
-
-Activated when `TRUST_FORWARDED_USER=true`. Reads the `X-Forwarded-User`
-header, which is the standard header used by Authelia, Authentik, Caddy
-`forward_auth`, and Traefik `ForwardAuth`. This tier covers generic
-reverse-proxy SSO setups where the proxy authenticates the user and injects a
-single identity header.
-
-### Tier 4: SSO cookie
-
-Activated when `SSO_COOKIE_NAME` is set to a non-empty value. The dashboard
-reads the named cookie from the request and decodes it as a session token. This
-tier is the fallback for environments where headers are stripped by intermediate
-proxies but cookies survive the hop.
-
-### Resolution order and fallback
-
-```text
-Request arrives
-  -> Tier 1: API key present?       -> YES -> identity = "api-client"
-  -> Tier 2: NPM headers trusted?   -> YES -> identity = header values
-  -> Tier 3: Forwarded user trusted? -> YES -> identity = header value
-  -> Tier 4: SSO cookie present?     -> YES -> identity = cookie payload
-  -> All tiers exhausted             -> 401 Unauthorized
-```
-
-When `REQUIRE_AUTH=false`, the resolver is bypassed entirely and all requests
-resolve to an anonymous identity. This mode is intended for development and
-fully isolated LAN deployments only.
+- **Notifications bell** — recent webhook delivery failures and crawler warnings.
+- **Seed Demo** — POST to `/api/seed-demo`, populates wants / evidence / notifications with deterministic sample rows. Idempotent. Useful for screenshots and demos.
+- **Refresh** — re-fetches the data for the visible tab only.
 
 ## Dashboard tab
 
-The landing view after login. Designed for at-a-glance operational awareness
-without requiring drill-down into individual tabs.
+The Dashboard tab is the at-a-glance health view.
 
-### Stat cards
+The top row is six stat cards: **DHT PEERS**, **TOTAL TORRENTS**, **RELEASES**, **EVIDENCE EVENTS**, **THROUGHPUT** (torrents/min), **CACHE HIT RATIO**. Values update on each refresh tick (default 10s when not connected to SSE).
 
-Four summary cards span the top of the page:
+Below the stat cards, two side-by-side panels:
 
-- **Total torrents** — count of unique infohashes in the Postgres index.
-- **Active DHT peers** — current peer count from the core's routing table.
-- **Indexer throughput** — torrents indexed per minute, averaged over the last
-  5 minutes.
-- **Cache hit ratio** — percentage of GraphQL queries served from cache vs.
-  Postgres.
+- **Category Breakdown** — share of the indexed catalogue by media type. Empty placeholder until the core has classified any content: *"Connect to BitAgent core to see category data."*
+- **System Health** — a green **Healthy** badge plus rows for **Uptime**, **Last Crawl** timestamp, **GraphQL API** status, **Metrics Endpoint** status, **Dashboard DB** (`SQLite OK` / `SQLite ERROR`).
 
-Each card displays the current value prominently with a small delta indicator
-showing the change over the last hour. Green arrows indicate improvement; red
-arrows indicate degradation.
-
-### Category breakdown
-
-A horizontal bar chart showing the distribution of indexed torrents across
-content categories (TV, Movies, Music, Books, Software, Other). Hover over a
-bar to see the exact count and percentage. Categories are derived from the CEL
-classifier output.
-
-### System health
-
-A compact status row with colored pills:
-
-- **Green** — all services healthy, DHT peers above threshold, no errors.
-- **Yellow** — degraded performance (high latency, low peer count, cache
-  pressure).
-- **Red** — service unreachable, database connection failed, or critical error
-  in the last 5 minutes.
-
-Each pill links to the corresponding System tab health check for deeper
-diagnostics.
-
-### Activity feed
-
-A reverse-chronological stream of the most recent operational events:
-
-- Torrents indexed (with infohash prefix and category)
-- Evidence webhook received (with *arr instance name)
-- Classifier decisions (preempt vs. full pipeline)
-- Settings changes (key, actor, timestamp)
-- Authentication events (logins, failed attempts)
-
-The feed auto-refreshes every 30 seconds. Click any entry to navigate to its
-detail view in the relevant tab.
+A **Recent Activity** table at the bottom (TIME / EVENT / CONTENT / TYPE / STATUS) shows the most recent 20 evidence events. *"View all"* in its top-right takes you to the Evidence tab. Empty state: *"No recent activity. Events appear when *arr webhooks fire."*
 
 ## Library tab
 
-The primary content browser for your indexed torrent collection.
+![Library](assets/screenshots/tab-library.png)
 
-### View modes
+The Library is the indexed catalogue — every torrent the BitAgent core has classified and admitted. Search is text-only (free text matches title / infohash / category tags). The **All types** dropdown filters by classifier verdict (`movie`, `tv_show`, `music`, `ebook`). The grid/list view toggle in the top-right switches between a poster gallery (TMDB-fetched art when `TMDB_API_KEY` is set, text fallback otherwise) and a denser table.
 
-Toggle between two layouts using the view switcher in the top-right corner:
+Pagination is **Previous / Next** with a *"Showing X–Y of Z"* footer. The page size is fixed at 50.
 
-- **Poster grid** — card-based layout showing TMDB poster art (when
-  `TMDB_API_KEY` is configured), title, category badge, seeder count, and
-  classifier confidence score. Cards are arranged in a responsive grid that
-  adapts to viewport width.
-- **List view** — dense table layout with sortable columns: title, category,
-  size, seeders, leechers, classifier confidence, indexed date, and evidence
-  count. Click any column header to sort ascending; click again for descending.
+Empty state: *"No torrents found. Adjust your search or wait for the DHT crawler to index content."*
 
-### Search
-
-The search bar accepts free-text queries and returns results ranked by
-classifier confidence and evidence score. Searches route through the core's
-GraphQL `searchTorrents` resolver. Results update as you type with a 300ms
-debounce.
-
-Search supports qualifier syntax for precision filtering:
-
-- `category:tv` — restrict to a specific category
-- `resolution:1080p` — filter by resolution tag
-- `seeders:>50` — minimum seeder threshold
-- `confidence:>0.8` — minimum classifier confidence
-
-### Filters
-
-The filter sidebar (collapsible on mobile) provides faceted filtering:
-
-- **Category** — checkbox list (TV, Movies, Music, Books, Software, Other)
-- **Resolution** — checkbox list (2160p, 1080p, 720p, SD)
-- **Source** — checkbox list (WEB-DL, WEBRip, BluRay, HDTV, etc.)
-- **Date range** — indexed-date picker with preset ranges (24h, 7d, 30d, 90d)
-- **Evidence status** — has evidence, no evidence, confirmed, rejected
-
-Filters compose with AND logic. Active filters display as removable chips above
-the results.
-
-### Torrent detail modal
-
-Click any torrent to open a full-detail modal overlay:
-
-- **Header** — title, poster art, category badge, and magnet link copy button.
-- **Metadata** — resolution, source, codec, audio channels, HDR format, file
-  count, total size.
-- **Classification** — confidence score, rule chain trace showing which CEL
-  rules fired, and whether evidence preempted the pipeline.
-- **Evidence history** — list of all webhook events associated with this
-  infohash, with timestamps, *arr instance names, and grab/fail status.
-- **Seeder graph** — sparkline showing seeder count over the last 30 days.
-- **Actions** — copy magnet URI, open in external tracker, flag for manual
-  review.
-
-Press `Esc` or click outside the modal to close.
+When the BitAgent core has classified content, every row resolves to a [TorrentContent GraphQL object](reference/dashboard-api.md). Clicking a row reveals the infohash beneath the title — useful for `magnet:?xt=urn:btih:` links.
 
 ## Wants tab
 
-Operator-defined search targets. A "want" is a content item you are actively
-seeking — BitAgent's Wantbridge routes DHT queries to seeders matching your
-explicit requests, bypassing generic keyword matching.
+![Wants](assets/screenshots/tab-wants.png)
 
-### Creating a want
+Wants are the operator's voice in the indexer. Each want is a persistent search target (title, query string, type, priority 0–100, status). The classifier biases admission toward content that matches an active want — the same way a `*arr` quality profile biases its grabs.
 
-Click the **New Want** button in the top-right corner. The creation form
-accepts:
+Columns: **TITLE**, **QUERY**, **TYPE** (movie / tv_show / music / ebook badge), **PRIORITY** (integer 0-100, higher first), **STATUS** (`active` / `paused`), **CREATED**, **ACTIONS** (Pause/Resume + Delete).
 
-- **Title** — free-text name for the want (e.g., "Severance S02E08").
-- **Type** — dropdown: TV Episode, TV Season, Movie, Music Album, Book.
-- **Identifiers** — optional TVDB ID, TMDB ID, or IMDB ID for precise
-  matching.
-- **Quality profile** — minimum resolution, preferred source, codec
-  preferences.
-- **Priority** — integer from 1 (highest) to 99 (lowest). Lower numbers are
-  resolved first when multiple wants match the same seeder pool.
-- **Notes** — free-text operator notes visible in the wants list.
-
-### Status management
-
-Each want has a lifecycle status:
-
-- **Active** — Wantbridge is actively routing queries for this item.
-- **Snoozed** — temporarily paused; resumes on the specified wake date.
-- **Fulfilled** — matched and confirmed via evidence webhook. Automatically
-  set when a grab event arrives.
-- **Cancelled** — manually retired by the operator.
-
-Bulk actions allow selecting multiple wants and applying status changes, priority
-adjustments, or deletion in a single operation.
-
-### Want list
-
-The wants list displays all items with columns for title, type, priority,
-status, created date, and last-matched date. Sort by any column. The search
-bar filters wants by title or identifier. Status pills use color coding: green
-for fulfilled, blue for active, yellow for snoozed, gray for cancelled.
+Use **Add Want** in the top-right to create one — the modal exposes Title, Query (free-text, case-insensitive), Type dropdown, Priority slider (default 50). Pause keeps the row + history; Delete is permanent. See [Wants Guide](wants.md) for the API and priority semantics.
 
 ## Evidence tab
 
-The evidence pipeline is BitAgent's feedback loop: *arr clients emit webhooks
-on successful downloads, and those events propagate ground-truth labels back
-into the classifier. The Evidence tab provides full visibility into this
-pipeline.
+![Evidence](assets/screenshots/tab-evidence.png)
 
-### Webhook event log
+The Evidence tab is the read-only view of incoming `*arr` webhook events. Each row is one POST from Sonarr / Radarr / Lidarr / Readarr to `/api/evidence`. Columns: **TIME**, **SOURCE** (`sonarr` / `radarr` / `lidarr` badge), **TORRENT**, **TYPE** (`grab` / `download` / `import`), **RESULT** (`success` / `failed` / `duplicate`).
 
-A reverse-chronological table of every webhook payload received:
+Empty state: *"No evidence events. Events appear when *arr sends download webhooks."*
 
-- **Timestamp** — when the webhook arrived at the evidence endpoint.
-- **Source** — which *arr instance sent the event (e.g., "sonarr-prod",
-  "radarr-4k").
-- **Event type** — `Grab`, `Download`, `Rename`, `Delete`, or `Test`.
-- **Infohash** — the torrent infohash associated with the event.
-- **Title** — the resolved title from the *arr payload.
-- **Status** — whether the event was accepted, deduplicated, or rejected with
-  the reason.
-
-Click any row to expand the full JSON payload for debugging.
-
-### How the *arr feedback loop works
-
-The evidence pipeline operates in four stages:
-
-1. **Ingestion** — *arr sends a webhook to
-   `POST /evidence/arr/<instance_name>`. The dashboard validates the payload
-   schema and deduplicates against recent events (burst suppression).
-
-2. **Label extraction** — successful download events carry ground-truth
-   identifiers (TVDB ID, TMDB ID, IMDB ID, season/episode numbers). These
-   are extracted and normalized across *arr version differences.
-
-3. **Classifier preempt** — the ground-truth label is written to the evidence
-   store and propagated to the CEL classifier. On subsequent encounters with
-   the same infohash, the classifier short-circuits its full rule chain and
-   applies the evidence label directly. This is the core mechanism that
-   reduces false positives over time.
-
-4. **Penalty weighting** — failed download events (quality rejections, import
-   failures) apply negative weights to the associated infohash. Repeated
-   failures progressively suppress the torrent in search rankings without
-   deleting it from the index.
+This is the closed-loop feedback signal that distinguishes BitAgent from naïve Torznab providers — every successful import is a ground-truth label that flows back into classifier weights. See [Evidence Pipeline](evidence.md) for the full diagram and the `*arr` webhook configuration steps.
 
 ## Settings tab
 
-The Settings tab contains six sub-tabs for runtime configuration. All changes
-write to the SQLite sidecar and take effect on the next request — no process
-restart required.
+![Settings → Configuration](assets/screenshots/tab-settings.png)
 
-### Configuration
+Settings is the runtime configuration surface. Six sub-tabs:
 
-General runtime settings that control dashboard behavior:
+- **Configuration** — the mutable runtime knobs (image above). One card per field: `torznab_api_key`, `bitagent_metrics_url`, `sso_cookie_name`, `tmdb_api_key`, `bitagent_graphql_url`, `trust_npm_headers`, `trust_forwarded_user`, `log_level`. Each card shows the current value, the `Default` line, a freeform input, and a Save button. Saved overrides apply on the next request — no restart.
+- **Auth & Security** — toggle `REQUIRE_AUTH`, set/rotate `DASHBOARD_API_KEY`, configure SSO cookie name + lifetime.
+- **Integrations** — Torznab base URL, TMDB API key, optional metric scrape targets.
+- **Retention** — DHT routing-table TTL, evidence log retention, poster cache eviction interval.
+- **Classifier** — heuristic weights, regex normalizers, NSFW filter strictness.
+- **Audit Log** — append-only history of override changes, auth events, and health-state transitions. Read-only.
 
-- **Dashboard refresh interval** — how often stat cards and the activity feed
-  auto-refresh (default: 30 seconds).
-- **Default view mode** — poster grid or list view for the Library tab.
-- **Items per page** — pagination size for Library, Wants, and Evidence lists.
-- **Timezone** — display timezone for all timestamps in the dashboard.
-- **Date format** — ISO 8601, US, or European date formatting.
-
-### Auth and Security
-
-Controls for the authentication subsystem:
-
-- **Require authentication** — master toggle (maps to `REQUIRE_AUTH`).
-- **API key display** — masked display of the current `DASHBOARD_API_KEY` with
-  a reveal toggle and copy button.
-- **Key regeneration** — button to generate a new API key. The old key is
-  immediately invalidated. Update your *arr indexer configuration with the new
-  key after regeneration.
-- **Trusted headers** — toggles for `TRUST_NPM_HEADERS` and
-  `TRUST_FORWARDED_USER` with inline warnings about the security implications
-  of enabling header trust.
-- **SSO cookie name** — text field to set or clear `SSO_COOKIE_NAME`.
-- **Active sessions** — list of currently authenticated sessions with IP, user
-  agent, and last-seen timestamp.
-
-### Integrations
-
-Connection settings for external services:
-
-- **GraphQL endpoint** — displays and allows editing of
-  `BITAGENT_GRAPHQL_URL`. Includes a connectivity test button.
-- **Metrics endpoint** — displays and allows editing of
-  `BITAGENT_METRICS_URL`. Includes a connectivity test button.
-- **TMDB API key** — masked input for `TMDB_API_KEY` with a test button that
-  fetches a known movie poster to verify the key.
-- **Webhook endpoints** — list of configured *arr webhook URLs with
-  health-check status indicators.
-
-### Retention
-
-Controls for automatic data lifecycle management:
-
-- **Torrent retention** — TTL in days for indexed torrents without evidence
-  (default: 90 days).
-- **Evidence retention** — TTL in days for webhook event records (default: 180
-  days).
-- **Poster cache TTL** — how long TMDB poster URLs are cached before
-  re-fetching (default: 7 days).
-- **Dry-run toggle** — preview what a retention sweep would delete before
-  committing.
-- **Manual purge** — button to trigger an immediate retention sweep with
-  confirmation dialog.
-
-### Classifier
-
-Tuning controls for the CEL classification pipeline:
-
-- **Classifier batch size** — number of torrents processed per classification
-  cycle.
-- **Classifier concurrency** — parallel worker count.
-- **LLM rerank gate** — toggle to enable or disable the optional LLM
-  disambiguation step for low-confidence classifications.
-- **Confidence threshold** — minimum confidence score required to accept a
-  classification without LLM rerank.
-- **Rule chain viewer** — read-only display of the active CEL rules in
-  priority order with match statistics.
-
-### Audit Log
-
-A complete, immutable history of every settings change made through the
-dashboard:
-
-- **Timestamp** — when the change was made.
-- **Actor** — the authenticated identity that made the change (from the auth
-  resolver).
-- **Key** — which setting was modified.
-- **Old value** — the previous value (masked for sensitive fields like API
-  keys).
-- **New value** — the new value (masked for sensitive fields).
-
-The audit log is append-only and stored in the SQLite sidecar. It cannot be
-cleared through the dashboard interface. Export to CSV is available via the
-download button in the top-right corner.
+All cards on the Configuration sub-tab are backed by the `MUTABLE_FIELDS` allowlist in `config.py` — fields outside the allowlist (e.g. `host`, `port`, `db_path`) are not exposed here on purpose; they require a container restart to change.
 
 ## System tab
 
-Diagnostic tools for operators who need to verify connectivity, test endpoints,
-and inspect raw data.
+![System → Health Check](assets/screenshots/tab-system.png)
 
-### Health checks
+System is the diagnostics surface — open it any time the Dashboard tab looks wrong, or a Sonarr indexer test fails. Four sub-tabs:
 
-A panel displaying the status of every dependency:
+- **Health Check** — three cards (BitAgent Core / Dashboard / Network) each with one-line status rows. The **Connectivity Test** panel underneath has a **Run All Checks** button that probes every endpoint synchronously and reports per-check latency.
+- **Torznab Test** — submit a manual Torznab query (e.g. `?t=tvsearch&q=...&apikey=...`) against the configured BitAgent core. Useful when *arr says "0 results" but you suspect a filter / key issue.
+- **GraphQL Explorer** — minimalist text-area + "Run" button. Not GraphiQL — no autocomplete, no schema browser. Use it to confirm the schema after a core upgrade.
+- **Raw Metrics** — streams `/metrics` (Prometheus exposition format). Verify the metric names match what your Grafana dashboards expect.
 
-- **BitAgent core** — GraphQL endpoint reachability and response time.
-- **PostgreSQL** — connection pool status, active queries, and replication lag
-  (if applicable).
-- **SQLite sidecar** — file integrity check and disk usage.
-- **DHT network** — peer count, bootstrap status, and routing table size.
-- **TMDB API** — connectivity and rate-limit headroom (if configured).
+Network card values are read directly from the bound sockets, not from config — so a mismatch between configured port and actual bound port is visible here.
 
-Each check runs on page load and can be re-triggered individually or all at
-once via the **Run All** button.
+See [System Tab — Diagnostics & Tools](system-tab.md) for sub-tab walkthroughs and ready-to-paste Torznab + GraphQL recipes.
 
-### Torznab tester
+## Authentication
 
-An interactive form for testing Torznab queries without leaving the dashboard:
+The dashboard supports four auth tiers, all gated by `REQUIRE_AUTH=true`. With `REQUIRE_AUTH=false` (default), every endpoint is open — fine for a Tailscale-only deployment, **never safe on the public internet**.
 
-- **Search type** — dropdown: `search`, `tvsearch`, `movie`, `music`, `book`.
-- **Query** — free-text search term.
-- **Parameters** — optional fields for season, episode, TVDB ID, IMDB ID.
-- **API key** — pre-filled with `TORZNAB_API_KEY` (masked, with reveal
-  toggle).
+When enforced, identity is resolved in this order:
 
-Click **Execute** to send the query and view the raw XML response in a
-syntax-highlighted panel. Response time and result count are displayed above
-the response body.
+1. **HMAC API key** — passed as `?apikey=`, `Authorization: Bearer <key>`, or `X-API-Key: <key>`. Compared with `hmac.compare_digest` against `DASHBOARD_API_KEY`.
+2. **NPM `x-auth-user` header** — when `TRUST_NPM_HEADERS=true`, the dashboard trusts the username injected by Nginx Proxy Manager's auth subrequest.
+3. **`X-Forwarded-User` reverse-proxy header** — when `TRUST_FORWARDED_USER=true`, the dashboard trusts the username injected by Authelia, oauth2-proxy, Cloudflare Access, or any standard reverse proxy.
+4. **SSO cookie** — when an HS256-signed JWT is present in the cookie named by `SSO_COOKIE_NAME`, the dashboard validates it and uses the `sub` claim as the identity.
 
-### GraphQL explorer
+Failures fall through to the next tier; if none match, the request gets `401 Unauthorized`. The current resolution method is shown on the **System → Health Check** card and on the sidebar avatar's secondary line.
 
-An embedded GraphQL IDE for running arbitrary queries against the BitAgent core:
+## Theming and accessibility
 
-- **Query editor** — syntax-highlighted textarea with autocomplete for known
-  schema types and fields.
-- **Variables panel** — JSON editor for query variables.
-- **Response panel** — formatted JSON output with collapsible nested objects.
-- **History** — recent queries are saved locally and can be re-executed with
-  one click.
+The dashboard ships dark by default. The **Dark mode** toggle in the sidebar footer flips the `data-theme` attribute on `<html>` and persists the preference to `localStorage` under `bitagent-ui:theme`. The toggle takes effect instantly — no page reload.
 
-Common queries are available as presets in a dropdown: `searchTorrents`,
-`getReleaseDetails`, `listEvidenceEvents`, `systemHealth`.
+`prefers-reduced-motion` is honoured: pulse animations on the stream-pill and sidebar transitions are suppressed when the OS reports motion sensitivity.
 
-### Raw metrics
+Keyboard navigation is partial in v1.0.0: `Tab` / `Shift+Tab` cycles primary controls and the Add Want / Save buttons are reachable, but full ←/→ tab navigation across the sidebar is on the v1.1.0 roadmap.
 
-A passthrough view of the Prometheus metrics exposed by the BitAgent core at
-`BITAGENT_METRICS_URL`. Displays the raw `/metrics` output in a monospace,
-scrollable panel with a search/filter bar for locating specific metric names.
+## Seeding demo data
 
-Useful for operators who need to verify metric exposition without configuring
-a full Prometheus + Grafana stack.
+Click **Seed Demo** in the header to populate wants, evidence, and notifications with deterministic sample rows. The endpoint (`POST /api/seed-demo`) is idempotent — it dedupes on `(title, query)` for wants and on `(infohash, type)` for evidence, so repeated clicks don't duplicate. Use this when:
 
-## Keyboard shortcuts
+- Generating screenshots for documentation (this exact UI was screenshotted with seeded data).
+- Smoke-testing webhook parsing without a live `*arr`.
+- Demoing the dashboard before the DHT has finished bootstrapping.
 
-The dashboard supports keyboard shortcuts for fast navigation. All shortcuts
-work globally unless a text input is focused.
-
-### Tab navigation
-
-| Shortcut | Action |
-|---|---|
-| `Alt+1` | Switch to Dashboard tab |
-| `Alt+2` | Switch to Library tab |
-| `Alt+3` | Switch to Wants tab |
-| `Alt+4` | Switch to Evidence tab |
-| `Alt+5` | Switch to Settings tab |
-| `Alt+6` | Switch to System tab |
-
-### Global actions
-
-| Shortcut | Action |
-|---|---|
-| `Ctrl+K` | Focus the global search bar (works from any tab) |
-| `R` | Refresh the current tab's data |
-| `Esc` | Close the active modal, dropdown, or sidebar |
-| `?` | Show the keyboard shortcuts help overlay |
-
-### Library-specific
-
-| Shortcut | Action |
-|---|---|
-| `G` | Toggle between grid and list view |
-| `Left` / `Right` | Navigate between pages in the torrent list |
-| `Enter` | Open the detail modal for the focused torrent |
-
-### Wants-specific
-
-| Shortcut | Action |
-|---|---|
-| `N` | Open the New Want form |
-| `Left` / `Right` | Navigate between pages |
-
-## Theming
-
-The dashboard supports dark and light color modes with automatic detection of
-your operating system preference.
-
-### Automatic mode
-
-By default, the dashboard reads the `prefers-color-scheme` media query from
-your browser and applies the matching theme on load. If your OS is set to dark
-mode, the dashboard renders in dark mode automatically — no manual action
-required.
-
-### Manual toggle
-
-A sun/moon icon button in the top-right corner of the navigation bar allows
-manual override. Click to cycle between:
-
-1. **Light mode** — white backgrounds, dark text, indigo accents.
-2. **Dark mode** — slate backgrounds, light text, indigo accents.
-3. **System** — revert to automatic OS preference detection.
-
-The selected preference is persisted in `localStorage` and survives browser
-restarts.
-
-### CSS custom properties
-
-The theme system uses CSS custom properties scoped to `[data-theme="light"]`
-and `[data-theme="dark"]` selectors. Operators who want to customize colors
-beyond the default palette can mount a custom stylesheet at
-`/static/custom.css` — the dashboard loads this file if it exists, and
-custom properties defined there override the defaults.
-
-Key properties available for override:
-
-- `--color-bg-primary` — main background color
-- `--color-bg-secondary` — card and panel background
-- `--color-text-primary` — primary text color
-- `--color-text-secondary` — secondary/muted text color
-- `--color-accent` — accent color for links, buttons, and active states
-- `--color-success` — green status indicators
-- `--color-warning` — yellow status indicators
-- `--color-danger` — red status indicators and error states
+The seeded rows persist in `bitagent_ui_data` (the named volume mounted at `/data`) until you delete them by hand or destroy the volume.
