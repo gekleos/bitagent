@@ -109,7 +109,6 @@ nav:
       - Changelog: project/changelog.md
       - Improvements vs upstream: project/improvements.md
       - Legal disclaimer: legal/disclaimer.md
-      - Donate (Children's International): project/donate-banner-snippets.md
 
 extra:
   social:
@@ -117,7 +116,4 @@ extra:
       link: https://github.com/gekleos/bitagent
   generator: false
 
-copyright: |
-  &copy; 2026 BitAgent contributors &middot; MIT licensed &middot;
-  Donate to <a href="https://www.children.org/" target="_blank" rel="noopener noreferrer">Children's International</a>
-  (no affiliation)
+copyright: "&copy; 2026 BitAgent contributors &middot; MIT licensed"
