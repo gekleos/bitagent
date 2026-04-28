@@ -147,7 +147,7 @@ You'll see one of: `TMDB_API_KEY unset`, `tmdb 401 invalid api key`, `tmdb 429 r
 
 ### Fix
 
-- Unset → register at https://www.themoviedb.org/settings/api (free), then set `TMDB_API_KEY` in the dashboard env, restart.
+- Unset → register at <https://www.themoviedb.org/settings/api> (free), then set `TMDB_API_KEY` in the dashboard env, restart.
 - Invalid → re-check the key character-for-character. TMDB v3 keys are 32 hex chars.
 - Rate limited → wait. The dashboard caches successful poster fetches in SQLite; rate-limit dies as the cache fills.
 

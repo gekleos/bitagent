@@ -4,7 +4,7 @@ End-to-end deployment of the BitAgent stack: the Go DHT crawler, the FastAPI das
 
 ## Architecture
 
-```
+```text
                   ┌──────────────────────┐
                   │       DHT swarm      │
                   │       (BEP-5 UDP)    │
@@ -193,7 +193,7 @@ bitagent.example.com {
 
 `.env` (next to compose, in `.gitignore`):
 
-```
+```text
 DASHBOARD_API_KEY=<openssl rand -hex 32>
 TORZNAB_API_KEY=<openssl rand -hex 32, DIFFERENT KEY>
 POSTGRES_PASSWORD=<openssl rand -hex 16>
