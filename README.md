@@ -1,4 +1,9 @@
-[![Release](https://img.shields.io/github/v/release/gekleos/bitagent?sort=semver)](https://github.com/gekleos/bitagent/releases) [![CI](https://img.shields.io/github/actions/workflow/status/gekleos/bitagent/ci.yml?branch=main)](https://github.com/gekleos/bitagent/actions) [![Docker Pulls](https://img.shields.io/docker/pulls/gekleos/bitagent-ui)](https://hub.docker.com/r/gekleos/bitagent-ui) [![License: MIT](https://img.shields.io/github/license/gekleos/bitagent)](LICENSE)
+[![CI](https://img.shields.io/github/actions/workflow/status/gekleos/bitagent/ci.yml?branch=main&label=CI)](https://github.com/gekleos/bitagent/actions/workflows/ci.yml)
+[![CodeQL](https://img.shields.io/github/actions/workflow/status/gekleos/bitagent/codeql.yml?branch=main&label=CodeQL)](https://github.com/gekleos/bitagent/actions/workflows/codeql.yml)
+[![OSSF Scorecard](https://api.scorecard.dev/projects/github.com/gekleos/bitagent/badge)](https://scorecard.dev/viewer/?uri=github.com/gekleos/bitagent)
+[![Docker Pulls](https://img.shields.io/docker/pulls/gekleos/bitagent-ui?label=docker%20pulls)](https://hub.docker.com/r/gekleos/bitagent-ui)
+[![Docker Image Size](https://img.shields.io/docker/image-size/gekleos/bitagent-ui/latest?label=image%20size)](https://hub.docker.com/r/gekleos/bitagent-ui/tags)
+[![License: MIT](https://img.shields.io/github/license/gekleos/bitagent)](LICENSE)
 
 # BitAgent
 
@@ -71,7 +76,7 @@ Configure your *arr stack by adding a Torznab indexer:
 
 ## Status
 
-BitAgent v1.0.0 is live. Follow [Discussions](https://github.com/gekleos/bitagent/discussions) for roadmap updates and community Q&A.
+v1.0.0 is the first public release of the operator dashboard. The published image is [`docker.io/gekleos/bitagent-ui`](https://hub.docker.com/r/gekleos/bitagent-ui) (multi-arch `amd64`+`arm64`, cosign-signed, SBOM + SLSA provenance attached). Open a [Discussion](https://github.com/gekleos/bitagent/discussions) for roadmap input or to share your deployment.
 
 ## Roadmap
 
