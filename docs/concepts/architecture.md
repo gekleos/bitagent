@@ -6,7 +6,7 @@ BitAgent is a self-hosted indexer engineered for high-throughput metadata correl
 
 The core operates as a stateful indexing service that bridges external client suites (Sonarr/Radarr/Prowlarr/Lidarr), exposes a GraphQL API, and persists discovered assets to PostgreSQL. The dashboard is a thin presentation layer communicating with the GraphQL API and a local SQLite sidecar for operator overrides + audit log + poster cache.
 
-BitAgent is a 2026 fork of upstream `bitmagnet-io/bitmagnet` (which went dormant July 2025). We carried forward the DHT primitives and core indexing engine; we diverged with a redesigned classification pipeline, decoupled evidence ingestion, multi-tier auth, settings-write infrastructure, and stricter runtime boundaries.
+BitAgent is a 2026 fork of [bitmagnet-io/bitmagnet](https://github.com/bitmagnet-io/bitmagnet). We carried forward the DHT primitives and core indexing engine; we diverged with a redesigned classification pipeline, decoupled evidence ingestion, multi-tier auth, settings-write infrastructure, and stricter runtime boundaries.
 
 ## Architecture diagram
 

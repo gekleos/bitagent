@@ -7,11 +7,6 @@ Self-hosted, high-performance BitTorrent DHT crawler and content indexer.
 Drop it into your *arr stack as a Torznab-compatible indexer and let the
 public DHT fill the gaps your private trackers miss.
 
-BitAgent is a 2026 fork of
-[bitmagnet](https://github.com/bitmagnet-io/bitmagnet), which went dormant
-in July 2025. We picked up where upstream left off and added classification,
-evidence learning, a dashboard, and multi-tier auth.
-
 MIT-licensed. No telemetry. No accounts. Just an indexer you own.
 
 ---

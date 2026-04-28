@@ -206,7 +206,7 @@ A: BitAgent is licensed under the MIT License. You may modify, distribute, and s
 
 ### Q: Is BitAgent a fork of bitmagnet?
 
-A: Yes. BitAgent is a 2026 fork of `bitmagnet-io/bitmagnet` after upstream went dormant in July 2025. We share the DHT protocol implementation and core indexing primitives but have rewritten classifier preempt, evidence pipeline, auth, observability, and release scaffolding.
+A: Yes. BitAgent is a 2026 fork of [bitmagnet-io/bitmagnet](https://github.com/bitmagnet-io/bitmagnet). We share the DHT protocol implementation and core indexing primitives but have added classifier preempt, evidence pipeline, multi-tier auth, observability, and release scaffolding.
 
 ### Q: How do I submit patches?
 

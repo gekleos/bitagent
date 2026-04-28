@@ -90,7 +90,7 @@ Removed the upstream-shipped Angular webui and the Jekyll-based marketing site. 
 ### 2026-04-20 — Fork established
 
 - Base: commit `2b9e8ea` (2025-07-01 upstream) plus all subsequent main-branch commits and tags through `v0.10.0`.
-- Upstream went dormant 2025-07-01 (last `main` commit).
+
 - The fork is now independent. The `upstream` remote remains configured for ad-hoc reference (security-fix surveillance) but imports are no longer on a schedule.
 
 ## Lineage
