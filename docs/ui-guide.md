@@ -101,7 +101,7 @@ See [System Tab — Diagnostics & Tools](system-tab.md) for sub-tab walkthroughs
 
 ## Authentication
 
-The dashboard supports four auth tiers, all gated by `REQUIRE_AUTH=true`. With `REQUIRE_AUTH=false` (default), every endpoint is open — fine for a private network-only deployment, **never safe on the public internet**.
+The dashboard supports four auth tiers, all gated by `REQUIRE_AUTH=true`. With `REQUIRE_AUTH=false` (default), every endpoint is open — fine for a private-network-only deployment, **never safe on the public internet**.
 
 When enforced, identity is resolved in this order:
 

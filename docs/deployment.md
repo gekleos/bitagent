@@ -301,5 +301,5 @@ If the new version requires an env var or compose change, the release notes will
 - **Reusing one key for both endpoints** — different threat models, different rotation cadences. Don't.
 - **Public internet with `REQUIRE_AUTH=false`** — your dashboard becomes a free Torznab provider for anyone who finds it, plus an open settings-mutation surface. Don't.
 - **`TMDB_API_KEY` unset** — Library posters silently fall back to text. Not a bug, but ugly. Free tier is fine.
-- **Auto-update points to `:main` or `:latest`** — host's docker daemon will sometimes serve stale digests. Pin the SHA.
+- **Auto-update points to `:main` or `:latest`** — the docker daemon will sometimes serve stale digests. Pin the SHA.
 - **Stack mounting `/data` on bind-mounts owned by root** — the dashboard's container user is `appuser` (uid 10001). Use a named volume, or `chown -R 10001 /your/host/path` first.
