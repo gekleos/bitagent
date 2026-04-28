@@ -1,4 +1,4 @@
-[![Release](https://img.shields.io/badge/status-RC-blue)](https://github.com/gekleos/bitagent/releases) [![CI](https://img.shields.io/github/actions/workflow/status/gekleos/bitagent/ci.yml?branch=main)](https://github.com/gekleos/bitagent/actions) [![License: MIT](https://img.shields.io/github/license/gekleos/bitagent)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/gekleos/bitagent?sort=semver)](https://github.com/gekleos/bitagent/releases) [![CI](https://img.shields.io/github/actions/workflow/status/gekleos/bitagent/ci.yml?branch=main)](https://github.com/gekleos/bitagent/actions) [![Docker Pulls](https://img.shields.io/docker/pulls/gekleos/bitagent-ui)](https://hub.docker.com/r/gekleos/bitagent-ui) [![License: MIT](https://img.shields.io/github/license/gekleos/bitagent)](LICENSE)
 
 # BitAgent
 
@@ -71,7 +71,7 @@ Configure your *arr stack by adding a Torznab indexer:
 
 ## Status
 
-This is the first public release. Watch the repo for v1.0.0 RC tags and follow [Discussions](https://github.com/gekleos/bitagent/discussions) for roadmap input.
+BitAgent v1.0.0 is live. Follow [Discussions](https://github.com/gekleos/bitagent/discussions) for roadmap updates and community Q&A.
 
 ## Roadmap
 
