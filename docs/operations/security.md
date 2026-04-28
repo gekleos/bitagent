@@ -43,8 +43,7 @@ Generate keys with at least 256 bits of entropy:
 
 ```bash
 openssl rand -hex 32
-```
-
+```text
 Both keys are read at process startup. Rotation requires a process restart; see [Key rotation](#key-rotation) below.
 
 ### Tier 3 — reverse-proxy auth
@@ -106,18 +105,16 @@ bitagent.example.com {
   }
   reverse_proxy @internal bitagent:3333
 }
-```
-
+```text
 Generate the bcrypt hash with `caddy hash-password`. Use a 12+ character random password.
 
 ## Webhook auth (`X-Evidence-Token`)
 
 Every `*arr` Connect → Webhook entry needs the `X-Evidence-Token` Custom Header set to the same value as `EVIDENCE_WEBHOOK_SECRET`. The webhook URL pattern is:
 
-```
+```text
 http://<bitagent-host>:3333/evidence/arr/<instance-label>
-```
-
+```text
 `<instance-label>` is operator-chosen — it ends up in the `label_evidence.source_instance` column for traceability (e.g. `sonarr-main`, `sonarr-anime`, `radarr-4k`).
 
 Mismatched or missing token → request rejected, no row written, increments `bitagent_evidence_events_rejected_total`.

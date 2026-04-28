@@ -31,17 +31,19 @@ docker compose -f examples/docker-compose.public.yml \
 
 Wait ~3 minutes for the full restart and DHT re-bootstrap. The Postgres data volume persists — you do not lose the indexed corpus.
 
-## Image-tagged upgrade (advanced)
+## Image-tagged upgrade
 
-For deployments using a private registry image tag (the advanced Portainer pattern):
+For deployments using a private registry image tag:
 
 1. Bump `BITAGENT_IMAGE_TAG` in your secrets store (Vault, env file, or environment).
-2. Trigger a Portainer redeploy — the standard pattern is git-backed stack with 5m auto-update + a webhook on any push to `deploy/`.
+2. Trigger a redeploy via your orchestrator (Compose, Portainer, Kubernetes, etc.).
 3. Verify the container actually recreated:
+
    ```bash
    docker inspect bitagent --format '{{ .State.StartedAt }}'
    ```
-   `StartedAt` must be newer than the merge commit time. If it's older, the redeploy was a no-op (image digest unchanged) — force a redeploy with `pullImage: true` in Portainer's stack config.
+
+   `StartedAt` must be newer than the deploy time. If it's older, the redeploy was a no-op (image digest unchanged) — force a pull and recreate explicitly.
 
 ## Pre-upgrade backup (MINOR / MAJOR)
 

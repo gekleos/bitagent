@@ -4,8 +4,7 @@ The BitAgent binary is named `bitagent`. Commands are sorted alphabetically by t
 
 ```bash
 bitagent --help
-```
-
+```text
 The command set is small and stable. Anything not on this page does not exist.
 
 ## Top-level commands
@@ -29,10 +28,9 @@ The entry point for running BitAgent. The container's default command is `worker
 
 ### `worker run`
 
-```
+```text
 worker run [--all] [--keys k1,k2,...]
-```
-
+```text
 | Flag | Purpose |
 |---|---|
 | `--all` | Enable every registered worker |
@@ -49,16 +47,14 @@ bitagent worker run --keys dht_crawler
 
 # Subset
 bitagent worker run --keys dht_crawler,classifier,evidence_arr_poller
-```
-
+```text
 The command blocks. SIGINT/SIGTERM stops all workers cleanly.
 
 ### `worker list`
 
 ```bash
 bitagent worker list
-```
-
+```text
 One key per line. Useful for confirming which workers a build registered.
 
 ## `bitagent classifier`
@@ -67,10 +63,9 @@ Inspect the live classifier without restarting the worker.
 
 ### `classifier show`
 
-```
+```text
 classifier show [--format yaml|json]
-```
-
+```text
 Prints the loaded classifier workflow source — CEL rules + content-type mapping.
 
 ```bash
@@ -82,26 +77,22 @@ bitagent classifier show > current-rules.yaml
 
 # JSON for programmatic consumers
 bitagent classifier show --format json | jq '.rules[0]'
-```
-
+```text
 ### `classifier schema`
 
-```
+```text
 classifier schema [--format yaml|json]
-```
-
+```text
 Prints the JSON Schema describing the workflow source. Useful for IDE auto-complete and validation when you're writing/editing rules.
 
 ```bash
 bitagent classifier schema --format json > classifier.schema.json
-```
-
+```text
 ## `bitagent config show`
 
 ```bash
 bitagent config show
-```
-
+```text
 Renders every resolved configuration path. Output is a wide table:
 
 | Column | Meaning |
@@ -120,22 +111,19 @@ bitagent config show | less -S
 
 # Grep for a specific subsystem
 bitagent config show | grep -i csam
-```
-
+```text
 ## `bitagent process`
 
 ```bash
 bitagent process
-```
-
+```text
 One-shot batch processor: runs the classification + persistence pipeline once over enqueued items, then exits. Useful for catch-up runs after a long downtime, or for scripted batch jobs.
 
 ## `bitagent reprocess`
 
 ```bash
 bitagent reprocess
-```
-
+```text
 Re-classifies already-indexed torrents through the current classifier. Idempotent. Run after editing CEL rules to apply the new logic to existing data without re-crawling.
 
 The operation is staged through the queue, so it can be safely interrupted and resumed. Watch progress via Prometheus (`bitagent_classifier_examined_total`).
@@ -158,20 +146,17 @@ In a deployed environment, run any CLI command via `docker exec`:
 
 ```bash
 docker exec bitagent bitagent <subcommand>
-```
-
+```text
 For example, to dump the resolved config of a running container:
 
 ```bash
 docker exec bitagent bitagent config show
-```
-
+```text
 To re-classify after editing rules in the container:
 
 ```bash
 docker exec bitagent bitagent reprocess
-```
-
+```text
 ## Exit codes
 
 | Code | Meaning |

@@ -19,7 +19,7 @@ This is the defense BitAgent implements.
 
 In execution order on every newly-discovered infohash:
 
-```
+```text
 DHT discovery
     │
     ▼
@@ -50,8 +50,7 @@ DHT discovery
         (closes the loop: this instance's observation
          is published as a community-feed seed, so other
          instances catch the hash at [1] going forward)
-```
-
+```text
 ## Honest limits
 
 - **First observation across the network** still incurs one BEP-9 fetch per network. The defense converges as observations propagate into community feeds — it does not eliminate.
@@ -62,14 +61,13 @@ DHT discovery
 
 Feed body is plain text, one entry per line:
 
-```
+```text
 # This is a comment line.
 # Anything after `#` is ignored to end-of-line.
 
 de47c9b27eb8d300dbb5f2c353e632c393262cf06340c4fa7f1b40c4cbd36f90
 0a1b2c3d...                       (64 lowercase hex chars)
-```
-
+```text
 - One double-hash per line, `64` lowercase hex chars (SHA-256 = 256 bits).
 - Comment lines start with `#` (after optional whitespace).
 - Blank lines are skipped.
@@ -124,8 +122,7 @@ When the post-fetch CEL classifier emits `ErrDeleteTorrent` AND the title or fil
 
 ```json
 {"ts":"2026-04-27T03:14:15.926Z","double_hash":"de47c9b2...","reason":"banned_keyword"}
-```
-
+```text
 The raw infohash is never written. The title and file paths are never written. The log itself is non-useful as a CSAM directory if it leaks: it is the same shape as a public feed.
 
 If `EXPORT_UPSTREAM_URL` is set, the same JSON object is POSTed to the configured endpoint with `Content-Type: application/json` and the optional `Authorization` header. POST failures are counted + logged but do not affect the local append.
@@ -149,8 +146,7 @@ CSAM_BLOCKLIST_FEED_URLS="http://localhost:18080/feed.txt" \
 
 # Watch metrics
 curl -s localhost:3333/metrics | grep csam_blocklist
-```
-
+```text
 The operator should see `feed_entries{feed="localhost:18080/feed.txt"}=1` within a refresh interval.
 
 ## Relationship to upstream

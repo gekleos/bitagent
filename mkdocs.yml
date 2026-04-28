@@ -107,7 +107,6 @@ nav:
       - Local setup: development/setup.md
   - Project:
       - Changelog: project/changelog.md
-      - Improvements vs upstream: project/improvements.md
       - Legal disclaimer: legal/disclaimer.md
 
 extra:
