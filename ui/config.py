@@ -1,5 +1,7 @@
 from __future__ import annotations
+
 from pathlib import Path
+
 from pydantic_settings import BaseSettings
 
 DATA_DIR = Path("/data") if Path("/data").exists() else Path(__file__).parent / "data"

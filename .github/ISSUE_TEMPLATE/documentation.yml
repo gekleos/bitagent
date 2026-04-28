@@ -1,0 +1,41 @@
+name: Documentation issue
+description: Something in the docs is wrong, missing, unclear, or out-of-date.
+title: "[Docs]: "
+labels: ["type:docs", "needs:triage"]
+body:
+  - type: input
+    id: page
+    attributes:
+      label: Page or path
+      description: URL on the docs site, or repo path (e.g. `docs/quickstart.md`).
+      placeholder: https://gekleos.github.io/bitagent/quickstart/
+    validations:
+      required: true
+
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What kind of issue?
+      options:
+        - Inaccurate / wrong
+        - Missing content
+        - Unclear / hard to follow
+        - Broken link
+        - Typo / formatting
+        - Out of date with code
+    validations:
+      required: true
+
+  - type: textarea
+    id: details
+    attributes:
+      label: Details
+      description: Quote the offending passage if helpful and describe what's wrong or missing.
+    validations:
+      required: true
+
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested fix (optional)
+      description: A concrete edit or replacement.

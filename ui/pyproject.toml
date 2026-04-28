@@ -1,0 +1,44 @@
+[project]
+name = "bitagent-ui"
+version = "1.0.0"
+description = "BitAgent operator dashboard — FastAPI + Jinja2."
+requires-python = ">=3.12"
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+extend-exclude = ["static", "templates"]
+
+[tool.ruff.lint]
+# Conservative initial ruleset — favour catching real bugs over stylistic nits.
+# Tighten over time; raising the bar is a separate cleanup PR.
+select = [
+  "E",      # pycodestyle errors
+  "F",      # pyflakes
+  "W",      # pycodestyle warnings
+  "I",      # isort
+  "UP",     # pyupgrade
+  "B",      # flake8-bugbear (likely-bug patterns)
+  "C4",     # flake8-comprehensions
+  "PIE",    # misc style improvements
+  "RET",    # flake8-return
+  "SIM",    # flake8-simplify
+  "PT",     # flake8-pytest-style (if/when tests land)
+  "RUF",    # ruff-specific
+]
+ignore = [
+  "B008",   # FastAPI uses `Depends(...)` and `Query(...)` as defaults — required pattern
+  "E501",   # line-too-long handled by formatter
+  "RET504", # unnecessary assignment before return — readability often wins
+  "SIM108", # ternary preference — readability call
+  "UP038",  # `isinstance(x, (a, b))` form is fine
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Allow star-imports / unused imports in __init__ shims (none today, kept for future).
+"__init__.py" = ["F401", "F403"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"

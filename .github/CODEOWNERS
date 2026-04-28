@@ -1,0 +1,20 @@
+# Default owner for everything in the repo.
+# Changes to any path require review from @gekleos unless overridden below.
+* @gekleos
+
+# CI, repo hygiene, and security-sensitive scaffolding — sole owner.
+/.github/ @gekleos
+/scripts/ @gekleos
+/SECURITY.md @gekleos
+/LICENSE @gekleos
+/NOTICE @gekleos
+
+# Docs can be reviewed by anyone with write access; explicit ownership for clarity.
+/docs/ @gekleos
+/mkdocs.yml @gekleos
+
+# UI dashboard.
+/ui/ @gekleos
+
+# Example deployments.
+/examples/ @gekleos

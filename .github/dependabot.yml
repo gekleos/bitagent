@@ -1,0 +1,68 @@
+version: 2
+
+updates:
+  # GitHub Actions: weekly bumps for action versions.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: America/Denver
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "ci"
+      include: scope
+    labels:
+      - "type:ci"
+      - "dependencies"
+    groups:
+      actions-minor:
+        applies-to: version-updates
+        update-types:
+          - minor
+          - patch
+
+  # Python deps for the operator dashboard.
+  - package-ecosystem: pip
+    directory: /ui
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: America/Denver
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps(ui)"
+      include: scope
+    labels:
+      - "area:ui"
+      - "dependencies"
+    groups:
+      ui-minor:
+        applies-to: version-updates
+        update-types:
+          - minor
+          - patch
+    ignore:
+      # Pin Pydantic to v2 major; v3 is breaking when it lands.
+      - dependency-name: "pydantic"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "pydantic-settings"
+        update-types: ["version-update:semver-major"]
+
+  # Dockerfile base image for the dashboard.
+  - package-ecosystem: docker
+    directory: /ui
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: America/Denver
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "deps(docker)"
+      include: scope
+    labels:
+      - "area:docker"
+      - "dependencies"
