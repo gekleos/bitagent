@@ -14,27 +14,26 @@ Patches land on `main` first, then back-port to the latest tag.
 
 ## Reporting a vulnerability
 
-**Do not file a public issue, MR, or discussion thread for a security finding.**
+**Do not file a public issue or discussion thread for a security finding.**
 
-Email `security@bitagent.example.com` with:
+Use [GitHub Security Advisories](https://github.com/gekleos/bitagent/security/advisories/new) to open a private report. Include:
 
 - Affected commit SHA or release tag
 - Steps to reproduce (curl invocations, payloads, deployment shape)
 - Impact assessment (auth bypass, RCE, data exfiltration, DoS, etc.)
 - Optional: a suggested fix
 
-If the finding is sensitive enough to need encryption, request our PGP key in the same email. (Fingerprint placeholder: `<GPG-FINGERPRINT-PLACEHOLDER>` — to be published once the maintainer key is generated.)
-
 We aim to acknowledge within **48 hours** and triage within **7 days**. A coordinated disclosure window of **90 days** is standard; extensions are negotiable for complex fixes or upstream coordination.
 
 ## Scope
 
-**In scope:**
+**In scope (this repository — `gekleos/bitagent`):**
 
-- The BitAgent Go codebase (`internal/`, `main.go`, build/CI scaffolding)
-- The `bitagent-ui` companion repo (Python FastAPI dashboard)
-- The deployment scaffolding under `deploy/` and the example compose files
-- Documented integration paths (Sonarr/Radarr evidence webhook, Torznab, GraphQL admin)
+- The operator dashboard under `ui/` (FastAPI + Jinja2 + static assets), including its auth surface and TMDB integration
+- The example deployments under `examples/` (`compose.public.yml`, `compose.authelia.yml`, `compose.tailnet.yml`, `prowlarr/`)
+- The repair/sanitize tooling under `scripts/`
+- The published Docker image `docker.io/gekleos/bitagent-ui` (and any future `gekleos/*` images we publish)
+- Documented integration paths surfaced by the dashboard (Sonarr/Radarr evidence webhook, Torznab, GraphQL admin)
 
 **Out of scope:**
 

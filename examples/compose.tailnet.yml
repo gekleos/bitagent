@@ -18,8 +18,11 @@
 
 services:
   # bitagent — the Go DHT crawler + classifier + Torznab adapter.
+  # NOTE: `gekleos/bitagent` core image is not yet published — see the
+  # HEADS-UP block at the top of `examples/compose.public.yml` for current
+  # options (build the fork yourself, or run upstream `bitmagnet` directly).
   bitagent:
-    image: ghcr.io/gekleos/bitagent:latest
+    image: docker.io/gekleos/bitagent:latest   # TBD
     restart: unless-stopped
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable
@@ -35,7 +38,7 @@ services:
   # bitagent-ui — the FastAPI operator dashboard. Trusts the upstream proxy's
   # forwarded identity headers; explicitly does NOT expose the public api-key path.
   bitagent-ui:
-    image: ghcr.io/gekleos/bitagent-ui:latest
+    image: docker.io/gekleos/bitagent-ui:latest
     restart: unless-stopped
     environment:
       BITAGENT_GRAPHQL_URL: http://bitagent:3333/graphql
