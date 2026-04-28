@@ -1,9 +1,6 @@
 from __future__ import annotations
-
 import hmac
-
-from fastapi import HTTPException, Request
-
+from fastapi import Request, HTTPException
 from config import settings
 
 
@@ -16,8 +13,9 @@ def resolve_identity(request: Request) -> dict:
         or request.headers.get("x-api-key")
         or request.headers.get("authorization", "").removeprefix("Bearer ").strip()
     )
-    if api_key and settings.dashboard_api_key and hmac.compare_digest(api_key, settings.dashboard_api_key):
-        return {"id": "api-client", "method": "api-key", "display": "API Client"}
+    if api_key and settings.dashboard_api_key:
+        if hmac.compare_digest(api_key, settings.dashboard_api_key):
+            return {"id": "api-client", "method": "api-key", "display": "API Client"}
 
     if settings.trust_npm_headers:
         npm_user = request.headers.get("x-auth-user")

@@ -143,7 +143,7 @@ async function loadDashboard() {
     // Crawl rate (DHT requests per minute, sliding window)
     document.getElementById('statCrawlRate').textContent = fmtNum(stats.crawlRatePerMin);
     // Success rate + Dead Blocked (liveness pipeline; zero until the core ships
-    // the new metrics — see gekleos/bitmagnet feat/liveness-blocklist)
+    // the new metrics — see the bitmagnet feat/liveness-blocklist)
     const liveness = stats.liveness || {};
     const success = liveness.successRate || 0;
     const successEl = document.getElementById('statSuccessRate');
@@ -287,8 +287,11 @@ function renderLibGrid(items) {
     const ct = t.contentType || 'unknown';
     const icon = POSTER_ICONS[ct] || POSTER_ICONS.unknown;
     const label = ct.replace('_', ' ');
+    // TMDB-enriched rows get a placeholder + an async fetch; non-TMDB stays text.
+    const posterId = (t.contentSource === 'tmdb' && t.contentId) ? t.contentId : '';
+    const mediaType = (ct === 'tv_show') ? 'tv' : 'movie';
     return `<div class="poster-card" onclick="openTorrentDetail('${escHtml(t.infoHash)}')">
-      <div class="poster-placeholder ${ct}">${icon}<span>${label}</span></div>
+      <div class="poster-placeholder ${ct}" data-poster-id="${posterId}" data-poster-type="${mediaType}">${icon}<span>${label}</span></div>
       <div class="poster-info">
         <div class="poster-title">${escHtml(title)}</div>
         <div class="poster-meta">
@@ -303,6 +306,49 @@ function renderLibGrid(items) {
       </div>
     </div>`;
   }).join('');
+  // Lazy-load TMDB posters for the rows that have a contentId. The endpoint
+  // caches in SQLite, so even a 50-row first load is cheap on subsequent visits.
+  hydrateTmdbPosters(grid);
+}
+
+async function hydrateTmdbPosters(root) {
+  const placeholders = root.querySelectorAll('.poster-placeholder[data-poster-id]:not([data-poster-id=""])');
+  // Fire in small batches so we don't open 50 sockets at once.
+  const queue = Array.from(placeholders);
+  const inFlight = 6;
+  async function workOne() {
+    const el = queue.shift();
+    if (!el) return;
+    const id = el.dataset.posterId;
+    const type = el.dataset.posterType || 'movie';
+    try {
+      const resp = await fetch(`${API}/api/poster/${encodeURIComponent(id)}?media_type=${type}`);
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data.poster_url) {
+          // Decode the image off-DOM first; only replace the placeholder once
+          // the bytes are available. On error the placeholder stays untouched.
+          // NOTE: do NOT set loading='lazy' — that suppresses the actual
+          // network fetch on detached images, so onload never fires.
+          const img = new Image();
+          img.alt = data.title || '';
+          img.decoding = 'async';
+          await new Promise((resolve) => {
+            img.onload = () => {
+              el.innerHTML = '';
+              el.appendChild(img);
+              el.classList.add('has-poster');
+              resolve();
+            };
+            img.onerror = () => resolve(); // placeholder stays in place
+            img.src = data.poster_url;
+          });
+        }
+      }
+    } catch (_) { /* fall back to placeholder silently */ }
+    return workOne();
+  }
+  await Promise.all(Array.from({ length: inFlight }, workOne));
 }
 
 function renderLibTable(items) {
