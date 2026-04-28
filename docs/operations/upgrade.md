@@ -33,10 +33,10 @@ Wait ~3 minutes for the full restart and DHT re-bootstrap. The Postgres data vol
 
 ## Image-tagged upgrade (operator-internal)
 
-For deployments using `registry.norvi.tech/kleos/bitagent:<tag>` (the operator-internal Apollo / Portainer pattern):
+For deployments using a private registry image tag (the operator-internal Portainer pattern):
 
-1. Bump `BITAGENT_IMAGE_TAG` in your secrets store (Infisical, Vault, or environment).
-2. Trigger a Portainer redeploy — the standard pattern is git-backed stack with 5m auto-update + GitLab webhook on any push to `deploy/`.
+1. Bump `BITAGENT_IMAGE_TAG` in your secrets store (Vault, env file, or environment).
+2. Trigger a Portainer redeploy — the standard pattern is git-backed stack with 5m auto-update + a webhook on any push to `deploy/`.
 3. Verify the container actually recreated:
    ```bash
    docker inspect bitagent --format '{{ .State.StartedAt }}'
@@ -122,7 +122,7 @@ The dump-restore path is safer than goose-down — `down` migrations may not be 
 Webhook fires HTTP 204 but `docker pull :latest` returns "access forbidden" — the registry login expired. Symptom: container restarts but version unchanged.
 
 ```bash
-docker login registry.norvi.tech -u kleos
+docker login <your-registry> -u <username>
 # then redeploy
 ```
 

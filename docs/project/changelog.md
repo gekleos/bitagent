@@ -14,7 +14,7 @@ The first publicly-shipped BitAgent release. Sidebar UI complete, real-data inte
 
 **Highlights.** This is the cut where BitAgent transitions from operator-internal tooling to a public release. The dashboard's six-tab sidebar layout, the public-quickstart compose file, and the docs site all date from this version.
 
-## kleos-v1.17 — 2026-04-26 — Quality evidence baseline
+## v1.17.0 — 2026-04-26 — Quality evidence baseline
 
 Production-deployed cut where the first end-to-end quality measurements were captured. Used as the reference baseline for the BEP-9 and wantbridge improvement workstreams.
 
@@ -23,9 +23,9 @@ Production-deployed cut where the first end-to-end quality measurements were cap
 - BEP-9 success rate 3.2% (improvements roadmap targets 8–15%)
 - TMDB-classified content; FP fix verified
 
-**Highlights.** Quality numbers shipped a week of stability after the kleos-v1.1.0 features (preempt + retention + LLM stage) had time to compound on real data.
+**Highlights.** Quality numbers shipped a week of stability after the v1.1.0 features (preempt + retention + LLM stage) had time to compound on real data.
 
-## kleos-v1.1.0 — 2026-04-21 — Classifier preempt + retention + LLM stage
+## v1.1.0 — 2026-04-21 — Classifier preempt + retention + LLM stage
 
 Four large branches landed in one cut. Defaults are conservative; live-apply flags are off. Deploy-and-observe was the explicit posture.
 
@@ -40,7 +40,7 @@ Four large branches landed in one cut. Defaults are conservative; live-apply fla
 
 Below are the change sets that landed under the old `bitmagnet` name during the fork-establishment + divergence phase. Retained for context; not actionable for upgraders.
 
-### 2026-04-24 — Phase 2 rebrand: Prometheus namespace
+### 2026-04-24 — Prometheus namespace rebrand
 
 Metric namespace migrated from `bitmagnet_*` to `bitagent_*` with a dual-emit window so legacy dashboards keep working.
 
@@ -51,14 +51,13 @@ Metric namespace migrated from `bitmagnet_*` to `bitagent_*` with a dual-emit wi
 
 **Cost.** ~2× map lookups + atomic increments per observation. Negligible vs the DHT socket and DB write that dominate the request path.
 
-### 2026-04-24 — Rebrand: kleos/bitmagnet → kleos/bitagent
+### 2026-04-24 — Rebrand: bitmagnet → bitagent
 
-- Go module path: `github.com/bitmagnet-io/bitmagnet` → `git.norvi.tech/kleos/bitagent`
+- Go module path: `github.com/bitmagnet-io/bitmagnet` → `github.com/gekleos/bitagent`
 - Binary name: `bitmagnet` → `bitagent`
 - DHT client ID suffix on the wire: `-BM0001-` → `-BA0001-`
 - CLI app name flip
 - `UPSTREAM_DIFF.md` → `HISTORY.md`
-- Container registry path stays `kleos/bitmagnet` due to GitLab refusing project rename when the registry is non-empty (would have destroyed 13 historical image tags). Build artefact is a BitAgent binary; only the storage path keeps the legacy name.
 
 **Deliberately not changed in Phase 1.** Postgres default DB name (`bitmagnet`), XDG config path (`~/.config/bitmagnet/config.yml`), and protobuf internal package name. All have separate-migration cost reasons.
 
@@ -86,7 +85,7 @@ Removed the upstream-shipped Angular webui and the Jekyll-based marketing site. 
 - Worker registry gains `evidence_qb_poller` and `evidence_arr_poller`.
 - Metrics scoped `bitmagnet_evidence_*` (now `bitagent_evidence_*`).
 
-**Design premise.** Canonical labels preempt the classifier entirely; the classifier runs only when no authoritative label exists for a given infohash. Classifier integration landed in the kleos-v1.1.0 cut.
+**Design premise.** Canonical labels preempt the classifier entirely; the classifier runs only when no authoritative label exists for a given infohash. Classifier integration landed in the v1.1.0 cut.
 
 ### 2026-04-20 — Fork established
 

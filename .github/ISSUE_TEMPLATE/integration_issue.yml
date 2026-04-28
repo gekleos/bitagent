@@ -20,7 +20,7 @@ body:
         - Readarr (Torznab indexer)
         - Reverse proxy (Caddy / Nginx / Traefik / NPM)
         - SSO / Authelia / Authentik / oauth2-proxy
-        - Tailscale / Tailnet
+        - VPN overlay network
         - Other
     validations:
       required: true

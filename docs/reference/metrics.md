@@ -20,7 +20,7 @@ Add this job to your Prometheus `scrape_configs`:
         service: bitagent
 ```
 
-Replace `localhost:3333` with the Tailscale IP / service hostname when scraping from a different host.
+Replace `localhost:3333` with the remote host IP or service hostname when scraping from a different host.
 
 ## Dual-emit window
 

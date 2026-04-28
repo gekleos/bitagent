@@ -2,6 +2,7 @@
 # Multi-stage: site-packages built once, runtime stays slim.
 
 FROM python:3.12-slim AS deps
+WORKDIR /build
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
@@ -11,6 +12,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
+# hadolint ignore=DL3008
 RUN apt-get update \
     && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/*

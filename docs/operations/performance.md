@@ -13,7 +13,7 @@ Pick the row that matches your host. The numbers below are observed steady-state
 | 4 GB / 2 vCPU | `1` | ~5–10 K torrents/day | Personal use, single `*arr` stack |
 | 8 GB / 4 vCPU | `2`–`4` | ~20–40 K torrents/day | Household use, several `*arr` stacks |
 | 16 GB / 8 vCPU | `4`–`8` | ~50–100 K torrents/day | Multi-user, larger media library |
-| 32+ GB dedicated | `8`–`10` | 100 K+ torrents/day | Operator scale; Apollo runs at `10` |
+| 32+ GB dedicated | `8`–`10` | 100 K+ torrents/day | Operator scale |
 
 A few constants to size around:
 
@@ -141,7 +141,7 @@ Total: roughly `2 GB + shared_buffers`. On a 16 GB host with `shared_buffers=4G`
 
 ## Real measured numbers (2026-04-26)
 
-From the quality-evidence pass shortly after `kleos-v1.17` deployed on Apollo:
+From the quality-evidence pass shortly after the v1.17 release:
 
 | Metric | Observed | Target |
 |---|---|---|
