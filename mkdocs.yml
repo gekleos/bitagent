@@ -39,7 +39,7 @@ theme:
   icon:
     repo: fontawesome/brands/github
   logo: ../static/v1/logo.svg
-  favicon: ../static/v1/logo.svg
+  favicon: assets/favicon.svg
 
 plugins:
   - search

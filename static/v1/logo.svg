@@ -1,7 +1,17 @@
-<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="BitAgent">
-  <path d="M 14 20 L 28 20 L 36 12 L 48 12 L 48 26 L 44 26 L 44 16 L 34 16 L 28 24 L 18 24 Z" fill="currentColor"/>
-  <path d="M 18 28 L 30 28 L 36 22 L 44 22 L 44 36 L 40 36 L 40 28 L 34 28 L 32 34 L 24 34 Z" fill="currentColor"/>
-  <path d="M 22 36 L 32 36 L 36 32 L 42 32 L 42 44 L 38 44 L 38 38 L 36 38 L 34 44 L 26 44 Z" fill="currentColor"/>
-  <path d="M 50 27 A 3 3 0 1 0 50 33 A 3 3 0 1 0 50 27 Z" fill="currentColor"/>
-  <path d="M 48 20 L 46 20 L 46 18 L 50 18 Z" fill="currentColor"/>
+<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="BitAgent logo">
+
+  <line x1="32.0" y1="24.5" x2="32.0" y2="15.0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.45"/>
+  <line x1="25.5" y1="28.25" x2="17.27" y2="23.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.45"/>
+  <line x1="25.5" y1="35.75" x2="17.27" y2="40.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.45"/>
+  <line x1="32.0" y1="39.5" x2="32.0" y2="49.0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.45"/>
+  <line x1="38.5" y1="35.75" x2="46.73" y2="40.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.45"/>
+  <line x1="38.5" y1="28.25" x2="46.73" y2="23.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.45"/>
+
+  <circle cx="32.0" cy="11.0" r="4" fill="currentColor" opacity="0.75"/>
+  <circle cx="13.81" cy="21.5" r="4" fill="currentColor" opacity="0.75"/>
+  <circle cx="13.81" cy="42.5" r="4" fill="currentColor" opacity="0.75"/>
+  <circle cx="32.0" cy="53.0" r="4" fill="currentColor" opacity="0.75"/>
+  <circle cx="50.19" cy="42.5" r="4" fill="currentColor" opacity="0.75"/>
+  <circle cx="50.19" cy="21.5" r="4" fill="currentColor" opacity="0.75"/>
+  <circle cx="32" cy="32" r="7.5" fill="currentColor"/>
 </svg>
