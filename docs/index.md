@@ -9,6 +9,8 @@ public DHT fill the gaps your private trackers miss.
 
 MIT-licensed. No telemetry. No accounts. Just an indexer you own.
 
+**VPN strongly recommended** — DHT participation exposes your node's IP to the swarm. See [Legal / Disclaimer](legal/disclaimer.md) for the full network-isolation and liability notice.
+
 ---
 
 ## Feature highlights

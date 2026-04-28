@@ -33,6 +33,8 @@ Wait ~3 minutes for the first DHT bootstrap, then open `http://localhost:8080` a
 
 Full quickstart: [docs/quickstart.md](docs/quickstart.md)
 
+> **VPN strongly recommended.** When BitAgent participates in the DHT, your node's IP address is visible to other peers. Route DHT traffic through a no-log VPN that supports port forwarding and set `BITAGENT_PEER_PORT` to the forwarded port. See [Legal / Disclaimer](docs/legal/disclaimer.md) for the full network-isolation recommendation.
+
 ## Architecture
 
 ```mermaid
@@ -81,6 +83,10 @@ Tracked in GitHub Discussions. Current focus:
 - Magnet sanitization + torrent health scoring
 - Mobile-responsive dashboard
 - Native Plex/Jellyfin metadata export
+
+## Legal
+
+BitAgent is a metadata indexer, not a download client. **The authors accept no liability for copyright infringement or any other harm arising from your use of this software.** Operators are solely responsible for complying with applicable copyright, data-protection, and network regulations in their jurisdiction. See [docs/legal/disclaimer.md](docs/legal/disclaimer.md) for the full disclaimer.
 
 ## License & acknowledgments
 
