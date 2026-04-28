@@ -871,3 +871,152 @@ tr:hover td { background: var(--color-bg-subtle); }
   max-height: 500px;
   white-space: pre-wrap;
 }
+
+/* ── Category Breakdown chart ─────────────────────────────────────── */
+/* Grid columns: icon | label (fixed) | bar (flex) | count | percent.
+   Fixed widths on the outer columns so all rows align to the same grid;
+   the bar column flexes to fill the rest of the card. */
+.cat-row {
+  display: grid;
+  grid-template-columns: 22px 96px 1fr 80px 56px;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+}
+.cat-row + .cat-row {
+  border-top: 1px solid var(--color-border-subtle, rgba(255,255,255,0.04));
+}
+.cat-icon {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+}
+.cat-icon svg {
+  width: 18px;
+  height: 18px;
+}
+.cat-label {
+  font-size: var(--text-sm);
+  color: var(--color-fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cat-bar {
+  height: 6px;
+  background: var(--color-bg-inset, rgba(255,255,255,0.04));
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.cat-bar-fill {
+  height: 100%;
+  border-radius: var(--radius-sm);
+  transition: width 240ms ease-out;
+}
+.cat-count {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--color-fg);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.cat-pct {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-fg-muted);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Filters sub-tab ─────────────────────────────────────────────── */
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--space-4);
+}
+.filter-card {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.filter-card-head {
+  display: grid;
+  grid-template-columns: 32px 1fr auto;
+  align-items: start;
+  gap: var(--space-3);
+}
+.filter-icon {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg-inset, rgba(255,255,255,0.04));
+  border-radius: var(--radius-sm);
+}
+.filter-icon svg {
+  width: 18px;
+  height: 18px;
+}
+.filter-name {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--color-fg);
+}
+.filter-stat {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border-subtle, rgba(255,255,255,0.04));
+}
+.filter-env {
+  font-size: var(--text-xs);
+  color: var(--color-fg-muted);
+}
+
+/* Per-extension breakdown grid */
+.ext-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--space-2);
+}
+.ext-cell {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-bg-inset, rgba(255,255,255,0.03));
+  border-radius: var(--radius-sm);
+}
+.ext-name {
+  color: var(--color-fg);
+  font-weight: var(--weight-medium);
+}
+.ext-count {
+  color: var(--color-fg-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Block Lists sub-tab ─────────────────────────────────────────── */
+.kv-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) 0;
+  font-size: var(--text-sm);
+}
+.kv-row + .kv-row {
+  border-top: 1px solid var(--color-border-subtle, rgba(255,255,255,0.04));
+}
+.kv-row > span:first-child {
+  color: var(--color-fg-muted);
+}
+.kv-row > span:last-child {
+  font-variant-numeric: tabular-nums;
+}
