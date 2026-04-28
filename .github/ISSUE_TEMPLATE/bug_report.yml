@@ -1,0 +1,100 @@
+name: Bug report
+description: Report a defect in BitAgent (crawler, classifier, Torznab, or dashboard).
+title: "[Bug]: "
+labels: ["type:bug", "needs:triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug. Please give us enough context to reproduce.
+
+        **Before submitting:**
+        - Check [existing issues](https://github.com/gekleos/bitagent/issues?q=is%3Aissue) and [Discussions](https://github.com/gekleos/bitagent/discussions).
+        - For security findings, use the [private security advisory form](https://github.com/gekleos/bitagent/security/advisories/new) instead.
+
+  - type: input
+    id: version
+    attributes:
+      label: BitAgent version
+      description: Output of the image tag, release tag, or commit SHA you're running.
+      placeholder: "v1.0.0 / ghcr.io/.../bitagent:1.0.0 / commit abcdef1"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      description: Which part of BitAgent does this affect?
+      options:
+        - DHT crawler
+        - Classifier (CEL rules)
+        - Torznab adapter
+        - GraphQL API
+        - Operator dashboard (UI)
+        - Evidence pipeline (*arr webhooks)
+        - Database / migrations
+        - Docker / deployment
+        - Documentation
+        - Other / not sure
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Clear description of the actual behavior.
+      placeholder: e.g. Sonarr's Torznab test fails with HTTP 401 even though the API key matches the env var.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+      placeholder: e.g. Sonarr's Torznab test should return 200 OK with caps XML.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Minimal steps. A failing curl or compose snippet is gold.
+      value: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: Paste container logs, dashboard error toast, or browser console output. Redact API keys.
+      render: shell
+
+  - type: textarea
+    id: env
+    attributes:
+      label: Deployment environment
+      description: Compose file in use, reverse proxy, host OS, *arr versions, anything that might matter.
+      placeholder: |
+        - Compose file: examples/compose.public.yml (unmodified)
+        - Reverse proxy: Caddy 2.8 with Authelia
+        - Host: Ubuntu 24.04, Docker 27.3
+        - Sonarr 4.0.10, Radarr 5.14.0
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Pre-flight checks
+      options:
+        - label: I searched existing issues and Discussions and didn't find a duplicate.
+          required: true
+        - label: I redacted any API keys, tokens, or PII from the logs above.
+          required: true
+        - label: This is NOT a security vulnerability (those go to the Security Advisory form).
+          required: true

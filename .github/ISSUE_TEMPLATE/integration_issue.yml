@@ -1,0 +1,82 @@
+name: Integration issue (*arr / reverse proxy / SSO)
+description: Problem connecting BitAgent to Sonarr, Radarr, Prowlarr, Lidarr, Readarr, or a reverse proxy / SSO stack.
+title: "[Integration]: "
+labels: ["type:integration", "needs:triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Integration issues need extra care because the failure can be on either side. Please fill in the full Torznab caps response if relevant.
+
+  - type: dropdown
+    id: integration
+    attributes:
+      label: Integration
+      options:
+        - Sonarr (Torznab indexer)
+        - Radarr (Torznab indexer)
+        - Prowlarr (Newznab provider)
+        - Lidarr (Torznab indexer)
+        - Readarr (Torznab indexer)
+        - Reverse proxy (Caddy / Nginx / Traefik / NPM)
+        - SSO / Authelia / Authentik / oauth2-proxy
+        - private network / mesh VPN
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: bitagent-version
+    attributes:
+      label: BitAgent version
+    validations:
+      required: true
+
+  - type: input
+    id: integration-version
+    attributes:
+      label: Integration version
+      description: e.g. Sonarr 4.0.10.2544, Caddy 2.8.4
+    validations:
+      required: true
+
+  - type: textarea
+    id: symptom
+    attributes:
+      label: Symptom
+      description: What does the integration show? Test failure, 401, 502, empty results, missing categories?
+    validations:
+      required: true
+
+  - type: textarea
+    id: torznab-caps
+    attributes:
+      label: Torznab caps response (if applicable)
+      description: |
+        Output of `curl -s "http://<bitagent>:3333/torznab?t=caps&apikey=$KEY" | head -40`
+      render: xml
+
+  - type: textarea
+    id: bitagent-logs
+    attributes:
+      label: BitAgent logs around the failure
+      render: shell
+
+  - type: textarea
+    id: integration-logs
+    attributes:
+      label: Integration logs around the failure
+      description: e.g. Sonarr's Indexers log around the test
+      render: shell
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Pre-flight checks
+      options:
+        - label: I read the relevant integration guide in [the docs](https://gekleos.github.io/bitagent/integrations/).
+          required: true
+        - label: I tried the bare `curl t=caps` test from the BitAgent host and it works.
+          required: false
+        - label: I redacted API keys from logs.
+          required: true

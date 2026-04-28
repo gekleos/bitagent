@@ -1,6 +1,9 @@
 from __future__ import annotations
+
 import time
+
 import httpx
+
 from config import settings
 from database import get_db
 
