@@ -371,26 +371,34 @@ async def _bump_block_phrase_hit(phrase_id: int) -> None:
 
 @app.get("/api/torrents/{info_hash}")
 async def api_torrent_detail(info_hash: str, identity: dict = Depends(require_auth)):
+    # The core's `torrent(...)` top-level query takes no arguments, so we
+    # can't fetch a torrent by hash directly. The supported path is the
+    # `torrentContent.search` query with an `infoHashes` filter, which
+    # returns the search-result item plus a nested `torrent { name size
+    # filesCount }`. That gives the dashboard everything it surfaces today.
     result = await gql.query(gql.TORRENT_DETAIL, {"infoHash": info_hash})
-    data = result.get("data") or {}
-    torrents = data.get("torrent") or []
-    content = ((data.get("torrentContent") or {}).get("search") or {}).get(
-        "items"
-    ) or []
-    if not torrents and not content:
+    items = (
+        ((result.get("data") or {}).get("torrentContent") or {}).get("search") or {}
+    ).get("items") or []
+    if not items:
         raise HTTPException(404, "Torrent not found")
-    t = torrents[0] if torrents else {}
-    c = content[0] if content else {}
+    c = items[0]
+    t = c.get("torrent") or {}
     return {
         "infoHash": info_hash,
         "name": c.get("title") or t.get("name"),
         "title": c.get("title"),
         "size": t.get("size") or 0,
         "filesCount": t.get("filesCount") or 0,
-        "files": t.get("files") or [],
+        # files[] is not exposed via torrentContent.search in the current
+        # schema; surface an empty list so the frontend renders cleanly.
+        "files": [],
         "contentType": c.get("contentType"),
+        "contentSource": c.get("contentSource"),
         "seeders": c.get("seeders") or 0,
         "leechers": c.get("leechers") or 0,
+        "createdAt": c.get("createdAt"),
+        "updatedAt": c.get("updatedAt"),
         "magnetUri": f"magnet:?xt=urn:btih:{info_hash}",
     }
 

@@ -82,21 +82,22 @@ query Search($input: TorrentContentSearchQueryInput!) {
 
 TORRENT_DETAIL = """
 query TorrentDetail($infoHash: Hash20!) {
-  torrent(infoHashes: [$infoHash]) {
-    infoHash
-    name
-    size
-    filesCount
-    files { path size }
-  }
   torrentContent {
     search(input: { infoHashes: [$infoHash], limit: 1 }) {
       items {
         infoHash
         title
         contentType
+        contentSource
         seeders
         leechers
+        createdAt
+        updatedAt
+        torrent {
+          name
+          size
+          filesCount
+        }
       }
     }
   }
