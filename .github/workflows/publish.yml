@@ -1,0 +1,181 @@
+name: Publish
+
+# Publishes the operator dashboard image to Docker Hub.
+#   - push to main         → :latest, :sha-<short>, :main
+#   - tag vX.Y.Z           → :X.Y.Z, :X.Y, :X, :latest
+#   - manual workflow_dispatch with explicit tag
+#
+# Image: docker.io/gekleos/bitagent-ui — multi-arch (linux/amd64,arm64),
+# cosign-signed (keyless via OIDC), SBOM + provenance attestations attached,
+# and Docker Hub repo README/short-description kept in sync from this repo.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "ui/**"
+      - ".github/workflows/publish.yml"
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Explicit tag to publish (defaults to :manual-<sha>)"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write     # cosign keyless signing
+  attestations: write # SBOM + provenance
+
+concurrency:
+  group: publish-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false   # never abort a publish — the deploy chain may be watching for digests
+
+env:
+  IMAGE_NAME: gekleos/bitagent-ui
+  REGISTRY: docker.io
+
+jobs:
+  build-and-push:
+    name: Build, sign, and push
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
+      tags: ${{ steps.meta.outputs.tags }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha,prefix=sha-,format=short
+            type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', 'main') || github.event_name == 'release' }}
+            type=raw,value=${{ inputs.tag }},enable=${{ inputs.tag != '' }}
+          labels: |
+            org.opencontainers.image.title=BitAgent UI
+            org.opencontainers.image.description=Operator dashboard for BitAgent — DHT crawler + Torznab provider for *arr stacks.
+            org.opencontainers.image.url=https://github.com/gekleos/bitagent
+            org.opencontainers.image.documentation=https://gekleos.github.io/bitagent/
+            org.opencontainers.image.source=https://github.com/gekleos/bitagent
+            org.opencontainers.image.licenses=MIT
+            org.opencontainers.image.vendor=BitAgent
+          annotations: |
+            org.opencontainers.image.title=BitAgent UI
+            org.opencontainers.image.description=Operator dashboard for BitAgent.
+
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: ./ui
+          file: ./ui/Dockerfile
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          annotations: ${{ steps.meta.outputs.annotations }}
+          provenance: mode=max
+          sbom: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3
+        with:
+          cosign-release: v2.4.1
+
+      - name: Sign image (keyless via OIDC)
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+          TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          set -euo pipefail
+          # Sign each pushed tag by digest (Sigstore best practice)
+          for tag in $TAGS; do
+            echo "Signing $tag@$DIGEST"
+            cosign sign --yes "$tag@$DIGEST"
+          done
+
+      - name: Generate SBOM (CycloneDX)
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build.outputs.digest }}
+          format: cyclonedx-json
+          output-file: sbom.cdx.json
+          upload-artifact: true
+          upload-release-assets: false
+
+      - name: Attest SBOM
+        uses: actions/attest-sbom@v2
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+          sbom-path: sbom.cdx.json
+          push-to-registry: true
+
+      - name: Attest provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+          push-to-registry: true
+
+      - name: Echo summary
+        run: |
+          echo "### Published" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Digest:** \`${{ steps.build.outputs.digest }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Tags:**" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo "${{ steps.meta.outputs.tags }}" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # Sync the Docker Hub repo's README + short description from this repo.
+  # Only runs on push to main so PR/preview builds don't churn the listing.
+  # ────────────────────────────────────────────────────────────────────────────
+  sync-dockerhub-readme:
+    name: Sync Docker Hub README
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: build-and-push
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Update Docker Hub repo description
+        uses: peter-evans/dockerhub-description@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: gekleos/bitagent-ui
+          short-description: "BitAgent operator dashboard — Sonarr/Radarr-aware Torznab provider with DHT-crawler insight."
+          readme-filepath: ./README.md
+          enable-url-completion: true
