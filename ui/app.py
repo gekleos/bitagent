@@ -172,7 +172,7 @@ async def api_stats(identity: dict = Depends(require_auth)):
     cache_hit_ratio = (hits / (hits + misses)) if (hits + misses) > 0 else 0.0
 
     # ── Liveness pipeline (counters emitted by the bitagent core's
-    # internal/evidence/liveness module — see kleos/bitmagnet feat/liveness-
+    # internal/evidence/liveness module — see the bitmagnet feat/liveness-
     # blocklist). The core uses labelled counters: observations_total has
     # {class,outcome} labels and revalidations_total has {outcome}. We sum
     # across the orthogonal dimension(s) we don't care about. All values
