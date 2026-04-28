@@ -1,0 +1,17 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question or general help
+    url: https://github.com/gekleos/bitagent/discussions/categories/q-a
+    about: Ask the community in Discussions — faster than an issue for usage questions.
+  - name: Roadmap and feature ideas
+    url: https://github.com/gekleos/bitagent/discussions/categories/ideas
+    about: Propose or discuss new features before opening an enhancement issue.
+  - name: Show and tell
+    url: https://github.com/gekleos/bitagent/discussions/categories/show-and-tell
+    about: Share your BitAgent deployment, integrations, or CEL classifier rules.
+  - name: Security vulnerability
+    url: https://github.com/gekleos/bitagent/security/advisories/new
+    about: Report a vulnerability privately via a GitHub Security Advisory. Do NOT open a public issue.
+  - name: Documentation
+    url: https://gekleos.github.io/bitagent/
+    about: Read the docs before filing — many "issues" are configuration questions.

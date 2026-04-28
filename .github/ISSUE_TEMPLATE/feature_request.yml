@@ -1,0 +1,55 @@
+name: Feature request
+description: Propose a new feature or enhancement.
+title: "[Feature]: "
+labels: ["type:enhancement", "needs:triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For early-stage ideas, prefer [Discussions → Ideas](https://github.com/gekleos/bitagent/discussions/categories/ideas).
+        Open an issue once the idea is concrete enough to implement.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem statement
+      description: What user-visible problem does this solve? Avoid jumping straight to a solution.
+      placeholder: e.g. "When I run BitAgent on a public IP, I have no way to scope Torznab access to specific *arr instances."
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: One concrete shape the feature could take. Code sketches, env-var names, or UI wireframes welcome.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Other shapes you considered and why you didn't pick them.
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Scope estimate (best guess)
+      options:
+        - Small (single file, hours)
+        - Medium (a few files, a day or two)
+        - Large (cross-cutting, week+)
+        - I have no idea
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Pre-flight checks
+      options:
+        - label: I searched existing issues and Discussions for similar proposals.
+          required: true
+        - label: This feature fits BitAgent's scope (DHT crawling, classification, Torznab, evidence loop) — not a wholly different product.
+          required: true
