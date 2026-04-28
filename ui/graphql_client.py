@@ -13,6 +13,7 @@ in the upstream schema — those were placeholders in the public-release prep.
 This module wraps the real schema and derives the dashboard's stats from
 torrentContent.search aggregations + the Prometheus /metrics scrape.
 """
+
 from __future__ import annotations
 
 import httpx
@@ -128,4 +129,6 @@ query SystemStats {
 # NOT in the bitagent core. The core has no concept of operator evidence.
 # We keep the constant as a sentinel for any caller that imports it but
 # the actual evidence list endpoint reads from database.py.
-EVIDENCE_EVENTS = "# evidence comes from the local SQLite — see database.list_evidence()"
+EVIDENCE_EVENTS = (
+    "# evidence comes from the local SQLite — see database.list_evidence()"
+)

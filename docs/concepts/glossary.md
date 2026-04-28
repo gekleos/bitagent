@@ -79,7 +79,7 @@ Optional final classifier stage that calls an external LLM for ambiguous torrent
 ## O
 
 ### operator-internal
-Refers to the Apollo / Portainer / Gluetun-specific deployment in `deploy/docker-compose.yml`. NOT the public quickstart. Operator-internal env vars (`SONARR_URL`, `EVIDENCE_WEBHOOK_SECRET`, `VPN_*`, etc.) are not present in `examples/docker-compose.public.yml`.
+Refers to the Portainer / Gluetun-specific deployment in `deploy/docker-compose.yml`. NOT the public quickstart. Operator-internal env vars (`SONARR_URL`, `EVIDENCE_WEBHOOK_SECRET`, `VPN_*`, etc.) are not present in `examples/docker-compose.public.yml`.
 
 ## P
 
