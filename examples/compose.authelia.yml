@@ -25,7 +25,10 @@
 
 services:
   bitagent:
-    image: ghcr.io/gekleos/bitagent:latest
+    # NOTE: `gekleos/bitagent` core image is not yet published — see the
+    # HEADS-UP block at the top of `examples/compose.public.yml` for current
+    # options (build the fork yourself, or run upstream `bitmagnet` directly).
+    image: docker.io/gekleos/bitagent:latest   # TBD
     restart: unless-stopped
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable
@@ -38,7 +41,7 @@ services:
         condition: service_healthy
 
   bitagent-ui:
-    image: ghcr.io/gekleos/bitagent-ui:latest
+    image: docker.io/gekleos/bitagent-ui:latest
     restart: unless-stopped
     environment:
       BITAGENT_GRAPHQL_URL: http://bitagent:3333/graphql

@@ -4,113 +4,106 @@ Thanks for your interest. BitAgent is a small, focused project with a narrow sco
 
 If you are about to file a security issue, **stop** and read [`SECURITY.md`](SECURITY.md) instead — public issues are not the right channel.
 
-## Local development
+## What's in this repository
+
+This is the **public release repository**. It contains:
+
+| Path | Purpose |
+| --- | --- |
+| `ui/` | Operator dashboard — FastAPI + Jinja2 + static assets. Built into [`docker.io/gekleos/bitagent-ui`](https://hub.docker.com/r/gekleos/bitagent-ui) by `.github/workflows/publish.yml`. |
+| `docs/` | MkDocs-Material source for [gekleos.github.io/bitagent](https://gekleos.github.io/bitagent/). |
+| `examples/` | Reference Compose deployments (`compose.public.yml`, `compose.authelia.yml`, `compose.tailnet.yml`) and a Prowlarr `applicationCustomDefinition` snippet. |
+| `scripts/sanitize.py` | Sanitize-scan tool that prevents private hostnames / tokens / personal references from landing in any committed file. Runs on every PR via `.github/workflows/sanitize.yml`. |
+| `mkdocs.yml`, `static/v1/` | Docs-site build config + brand assets. |
+
+The DHT-crawler / classifier / Torznab Go core that backs the published image is a fork of [`bitmagnet-io/bitmagnet`](https://github.com/bitmagnet-io/bitmagnet). The fork's source is not in this repository at this time. If you need to modify core behaviour, start from upstream bitmagnet and open an issue here describing the proposed change.
+
+## Local development — operator dashboard (`ui/`)
 
 ### Prerequisites
 
-- Go 1.22+
-- Python 3.12+ (for the `bitagent-ui` dashboard repo)
-- Postgres 14+ (16 recommended)
-- Docker + Docker Compose (for the local stack)
-- `task` (https://taskfile.dev) — used as the build entrypoint
+- Python 3.12+
+- A running BitAgent core (or upstream `bitmagnet`) with GraphQL on `:3333` for end-to-end testing — optional; the UI can boot in `REQUIRE_AUTH=false` against a stubbed core for layout work.
+- Docker + Docker Compose (only if you want to test the published image shape).
 
-### Getting the code running
+### Run the dashboard locally
 
 ```bash
-git clone https://github.com/gekleos/bitagent.git
-git clone https://github.com/gekleos/bitagent-ui.git
-cd bitagent
-cp .env.example .env       # adjust DATABASE_URL etc.
-task dev:up                # postgres + a dev container
-task run                   # bitagent up against the dev DB
-```
-
-For the dashboard:
-
-```bash
-cd ../bitagent-ui
+cd ui
 python3.12 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt -r requirements-dev.txt
-pip install -e .
-REQUIRE_AUTH=false python -m bitagent_ui
-
-# -> http://localhost:8080
-
+pip install -r requirements.txt
+REQUIRE_AUTH=false uvicorn app:app --host 127.0.0.1 --port 8080 --reload
+# → http://127.0.0.1:8080
 ```
 
-### Running the test suite
+### Build the dashboard image locally
 
 ```bash
-go test ./... -race -count=1                      # bitagent
-pytest -q                                         # bitagent-ui
+cd ui
+docker build -t bitagent-ui:local .
+docker run --rm -p 8080:8080 -e REQUIRE_AUTH=false bitagent-ui:local
 ```
 
-CI runs the same invocations plus `golangci-lint run` and the build/push chain. All must pass on every PR.
+## Local development — docs
+
+```bash
+python3.12 -m venv .venv-docs
+source .venv-docs/bin/activate
+pip install mkdocs-material==9.5.* mkdocs-mermaid2-plugin==1.2.* mkdocs-glightbox==0.4.*
+mkdocs serve   # → http://127.0.0.1:8000
+mkdocs build --strict   # what CI runs
+```
+
+## What CI checks
+
+The full gate is `.github/workflows/ci.yml` (job `CI gate`); fan-in jobs:
+
+| Job | What it enforces |
+| --- | --- |
+| Python lint (ruff + format) | `ruff check` and `ruff format --check` clean against `ui/pyproject.toml`. |
+| Python deps audit (pip-audit) | No new known CVEs in `ui/requirements.txt`. (Five existing CVEs are explicitly allow-listed pending a dependency-bump PR; do not add to that list without a corresponding tracked issue.) |
+| Dockerfile lint (hadolint) | `ui/Dockerfile` clean at warning threshold. |
+| Compose file validation | `docker compose -f X config -q` succeeds on every `examples/*.yml`. |
+| Docker build | The dashboard image builds and `/healthz` responds inside 30s. |
+| Trivy filesystem scan | No HIGH or CRITICAL vulnerabilities in the repo tree. |
+| Repo lint (yamllint + actionlint) | Workflow correctness + YAML hygiene. |
+
+Plus separate workflows: **CodeQL** (Python `security-and-quality` pack), **OSSF Scorecard**, **Sanitize Scan**, **Deploy Docs** (build + GitHub Pages publish), **Publish** (multi-arch Docker Hub push with cosign signing + SBOM + SLSA provenance on push to `main` and on tagged releases).
+
+A PR cannot merge unless `CI gate` and `Sanitize Scan` are green. There are no required human approvals, but `CODEOWNERS` directs review traffic.
 
 ## Branch + commit conventions
 
-- Branch from `main`. Branch names: `feat/<topic>`, `fix/<topic>`, `docs/<topic>`.
+- Branch from `main`. Branch names: `feat/<topic>`, `fix/<topic>`, `docs/<topic>`, `chore/<topic>`, `ci/<topic>`.
 - One logical change per PR. If you find a drive-by fix, file it separately or call it out in the description.
-- Conventional Commits subject line (`feat(torznab): …`, `fix(dht): …`, `docs(security): …`). Body wraps at ~72 cols.
-- **DCO sign-off required.** Use `git commit --signoff` (or `git commit -s`). We do **not** require a CLA. Sign-off certifies the [Developer Certificate of Origin](https://developercertificate.org).
+- Conventional Commits subject line (`feat(ui): …`, `fix(torznab-docs): …`, `docs(security): …`, `ci: …`). Body wraps at ~72 cols.
 - Commit messages explain *why*, not *what* the diff already shows.
 
-## PR description template
+## Pull request expectations
 
-Every PR must include the following sections:
+`.github/PULL_REQUEST_TEMPLATE.md` is auto-rendered for every PR. Fill in **What changed**, **Why** (with linked issue/discussion if any), the change-type checkbox, and **How was this tested?**. For UI changes, attach a before/after screenshot.
 
-```markdown
-
-## What changed
-
-<concise summary of the diff>
-
-## Why
-
-<motivation: which issue, what symptom, what's the user story>
-
-## Impact
-
-<who's affected, breaking changes, migration steps>
-
-## Version
-
-<current> → <new> (<patch | minor | major>)
-Reason: <why this bump level>
-
-## Test results
-
-<paste relevant `go test` / `pytest` output or attach evidence>
-```
-
-PRs missing the template are sent back for revision.
+Force-push to `main` is **not** allowed. Force-push to your own branch is fine — and expected — after a rebase.
 
 ## Code style
 
-- **Go:** `gofmt -s` enforced by CI. `golangci-lint run` clean — config at `.golangci.yml`. Public types and functions get doc comments. `context.Context` is the first arg of any function that does I/O. Errors wrapped with `%w` and a stable string prefix.
-- **Python:** `ruff check` + `mypy --strict` on new modules; gradual on legacy. Type hints required on public functions.
-- Both: keep diffs focused. Don't reformat unrelated files.
+- **Python:** `ruff check` + `ruff format` enforced by CI; configuration lives in `ui/pyproject.toml`. Type hints on public functions are encouraged but not gated.
+- **YAML:** `yamllint` (relaxed profile) + `actionlint` for workflows.
+- **Markdown (docs):** `markdownlint-cli2` per `.markdownlint.json` for everything under `docs/`.
+- **Dockerfile:** `hadolint` warning threshold.
 
-## Test discipline
+Keep diffs focused. Don't reformat unrelated files — the formatter pass already happened.
 
-- Bug fixes ship with a regression test.
-- New behaviour ships with at least one happy-path and one error-path test.
-- Table-driven tests are preferred for branchy logic.
-- Integration tests that need a Postgres should use `testcontainers` or an ephemeral compose; do not assume a DB is running.
-- Don't mock what you don't own — prefer the real thing in a container.
+## Tests
 
-## Code review
-
-- CI runs on every push (lint + tests + build). All must pass before review.
-- One maintainer approval is required to merge to `main`.
-- Squash-merge is the default; the squash commit follows Conventional Commits.
-- Force-push to `main` is **not** allowed. Force-push to your own branch is fine after a rebase.
+This repository does not yet ship a Python test suite. If you add behaviour to `ui/`, contributing the first `pytest` setup — a tiny `tests/test_app.py` with a couple of `httpx.AsyncClient` requests against the FastAPI app — is welcome and will be merged eagerly.
 
 ## Communication
 
-- GitHub Issues for tracked work.
-- GitHub Discussions for design + roadmap conversations.
+- **GitHub Issues** for tracked work. Use the templates: bug / feature / integration / docs.
+- **GitHub Discussions** for usage questions, roadmap conversations, and "show and tell".
+- **GitHub Security Advisories** for vulnerabilities — see [`SECURITY.md`](SECURITY.md).
 - A real-time chat channel may open after sustained interest; it does not exist yet.
 
 ## Licensing
@@ -121,9 +114,9 @@ BitAgent is licensed under the MIT License (see [`LICENSE`](LICENSE)). The origi
 
 Some changes we will close without merging:
 
-- A bundled web UI inside the `bitagent` Go repo — the dashboard lives in `bitagent-ui` on purpose.
-- New social features, account systems, multi-tenant auth.
-- Speculative LLM-everywhere refactors. The LLM stage is opt-in, shadow-first, and bounded.
-- Code-style sweeps that mix many files — they create review pain.
+- Re-importing the Go core into this repository — the public release intentionally publishes the dashboard + docs + deployment scaffolding only. Core changes belong upstream.
+- New social features, account systems, multi-tenant auth on the dashboard.
+- Speculative LLM-everywhere refactors. The classifier's LLM stage is opt-in, shadow-first, and bounded.
+- Code-style sweeps that mix many files — they create review pain. Open a discussion first if you think a sweep is warranted.
 
 If you are unsure whether a contribution is in scope, open a small issue describing the idea before writing the code.
