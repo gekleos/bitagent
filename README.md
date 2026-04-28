@@ -71,7 +71,7 @@ Configure your *arr stack by adding a Torznab indexer:
 
 ## Status
 
-This is the first public release. Watch the repo for v1.0.0 RC tags and follow [Discussions](https://github.com/gekleos/bitagent/discussions) for roadmap input.
+BitAgent v1.0.0 is live. Follow [Discussions](https://github.com/gekleos/bitagent/discussions) for roadmap updates and to share your setup.
 
 ## Roadmap
 
