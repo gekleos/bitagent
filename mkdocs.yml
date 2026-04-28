@@ -11,6 +11,7 @@ theme:
     - navigation.tabs
     - navigation.sections
     - navigation.top
+    - navigation.indexes
     - search.highlight
     - search.suggest
     - content.code.copy
@@ -67,25 +68,45 @@ markdown_extensions:
 nav:
   - Home: index.md
   - Quickstart: quickstart.md
+  - Configuration: configuration.md
   - Deployment: deployment.md
   - FAQ: faq.md
   - Concepts:
       - Architecture: concepts/architecture.md
+      - DHT crawler: concepts/dht-crawler.md
+      - Classification: concepts/classification.md
+      - Wantbridge: concepts/wantbridge.md
+      - CSAM defense: concepts/csam-defense.md
+      - Glossary: concepts/glossary.md
   - Dashboard:
-      - UI Guide: ui-guide.md
+      - UI guide: ui-guide.md
       - Wants: wants.md
-      - Evidence Pipeline: evidence.md
-      - System Tab: system-tab.md
-      - API Reference: reference/dashboard-api.md
+      - Evidence pipeline: evidence.md
+      - System tab: system-tab.md
+      - Dashboard API: reference/dashboard-api.md
+  - Reference:
+      - Torznab API: reference/torznab-api.md
+      - GraphQL API: reference/graphql-api.md
+      - CLI: reference/cli.md
+      - Metrics: reference/metrics.md
   - Integrations:
       - Sonarr: integrations/sonarr.md
       - Radarr: integrations/radarr.md
-      - Prowlarr: integrations/prowlarr.md
+      - Readarr: integrations/readarr.md
       - Lidarr: integrations/lidarr.md
+      - Prowlarr: integrations/prowlarr.md
       - Private tracker mode: integrations/private-tracker-mode.md
   - Operations:
       - Troubleshooting: troubleshooting.md
+      - Monitoring: operations/monitoring.md
+      - Performance tuning: operations/performance.md
+      - Security: operations/security.md
+      - Backup & restore: operations/backup-restore.md
+      - Upgrade: operations/upgrade.md
+  - Development:
+      - Local setup: development/setup.md
   - Project:
+      - Changelog: project/changelog.md
       - Improvements vs upstream: project/improvements.md
       - Legal disclaimer: legal/disclaimer.md
       - Donate (Children's International): project/donate-banner-snippets.md
