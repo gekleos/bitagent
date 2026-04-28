@@ -1,9 +1,7 @@
 from __future__ import annotations
-
+import json
 import time
-
 import aiosqlite
-
 from config import settings
 
 _db: aiosqlite.Connection | None = None
@@ -79,13 +77,17 @@ async def _init_tables(db: aiosqlite.Connection):
 
 async def get_override(key: str) -> str | None:
     db = await get_db()
-    row = await db.execute_fetchall("SELECT value FROM settings_overrides WHERE key = ?", (key,))
+    row = await db.execute_fetchall(
+        "SELECT value FROM settings_overrides WHERE key = ?", (key,)
+    )
     return row[0][0] if row else None
 
 
 async def set_override(key: str, value: str, actor: str = "operator") -> dict:
     db = await get_db()
-    old_rows = await db.execute_fetchall("SELECT value FROM settings_overrides WHERE key = ?", (key,))
+    old_rows = await db.execute_fetchall(
+        "SELECT value FROM settings_overrides WHERE key = ?", (key,)
+    )
     old_value = old_rows[0][0] if old_rows else None
     now = time.time()
     await db.execute(
@@ -112,12 +114,17 @@ async def get_audit_log(limit: int = 100) -> list[dict]:
         "SELECT id, key, old_value, new_value, actor, timestamp FROM audit_log ORDER BY timestamp DESC LIMIT ?",
         (limit,),
     )
-    return [{"id": r[0], "key": r[1], "old": r[2], "new": r[3], "actor": r[4], "at": r[5]} for r in rows]
+    return [
+        {"id": r[0], "key": r[1], "old": r[2], "new": r[3], "actor": r[4], "at": r[5]}
+        for r in rows
+    ]
 
 
 async def delete_override(key: str, actor: str = "operator") -> bool:
     db = await get_db()
-    old_rows = await db.execute_fetchall("SELECT value FROM settings_overrides WHERE key = ?", (key,))
+    old_rows = await db.execute_fetchall(
+        "SELECT value FROM settings_overrides WHERE key = ?", (key,)
+    )
     if not old_rows:
         return False
     now = time.time()

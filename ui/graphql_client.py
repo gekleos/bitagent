@@ -13,11 +13,9 @@ in the upstream schema — those were placeholders in the public-release prep.
 This module wraps the real schema and derives the dashboard's stats from
 torrentContent.search aggregations + the Prometheus /metrics scrape.
 """
-
 from __future__ import annotations
 
 import httpx
-
 from config import settings
 
 _client: httpx.AsyncClient | None = None
@@ -66,6 +64,7 @@ query Search($input: TorrentContentSearchQueryInput!) {
         title
         contentType
         contentSource
+        contentId
         seeders
         leechers
         createdAt

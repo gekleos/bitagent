@@ -1,31 +1,27 @@
 from __future__ import annotations
-
 import time
-from contextlib import asynccontextmanager
 from pathlib import Path
+from contextlib import asynccontextmanager
 
-from fastapi import Depends, FastAPI, HTTPException, Query, Request
+from fastapi import FastAPI, Request, Depends, HTTPException, Query
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
+from config import settings, MUTABLE_FIELDS
+from auth import require_auth
+from database import (
+    get_db, get_all_overrides, set_override, get_audit_log,
+    delete_override,
+)
 import graphql_client as gql
 import tmdb
-from auth import require_auth
-from config import MUTABLE_FIELDS, settings
-from database import (
-    delete_override,
-    get_all_overrides,
-    get_audit_log,
-    get_db,
-    set_override,
-)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     from database import get_db
-
     await get_db()
     yield
 
@@ -48,14 +44,12 @@ templates = Jinja2Templates(directory=BASE / "templates")
 
 # ── Health ────────────────────────────────────────────────────────────
 
-
 @app.get("/healthz")
 async def healthz():
     return {"status": "ok", "ts": time.time()}
 
 
 # ── Auth ──────────────────────────────────────────────────────────────
-
 
 @app.get("/api/me")
 async def me(identity: dict = Depends(require_auth)):
@@ -64,21 +58,14 @@ async def me(identity: dict = Depends(require_auth)):
 
 # ── Dashboard page ────────────────────────────────────────────────────
 
-
 @app.get("/")
 async def dashboard(request: Request, identity: dict = Depends(require_auth)):
-    return templates.TemplateResponse(
-        "index.html",
-        {
-            "request": request,
-            "identity": identity,
-            "active_tab": "dashboard",
-        },
-    )
+    return templates.TemplateResponse("index.html", {
+        "request": request, "identity": identity, "active_tab": "dashboard",
+    })
 
 
 # ── API: System stats ────────────────────────────────────────────────
-
 
 @app.get("/api/stats")
 async def api_stats(identity: dict = Depends(require_auth)):
@@ -165,7 +152,9 @@ async def api_stats(identity: dict = Depends(require_auth)):
     # Crawl rate: DHT request rate per minute (sample_infohashes + get_peers
     # request count is a true measure of how much of the network the crawler
     # is touching per unit time).
-    crawl_rate_per_min = int(rate_per_min("bitagent_dht_client_request_duration_seconds_count"))
+    crawl_rate_per_min = int(
+        rate_per_min("bitagent_dht_client_request_duration_seconds_count")
+    )
     # Indexer throughput: classifier-examined rate per minute (instantaneous
     # if we have enough samples, lifetime-average fallback otherwise).
     examined = metric_sum.get("bitagent_contentfilter_examined_total", 0)
@@ -183,7 +172,7 @@ async def api_stats(identity: dict = Depends(require_auth)):
     cache_hit_ratio = (hits / (hits + misses)) if (hits + misses) > 0 else 0.0
 
     # ── Liveness pipeline (counters emitted by the bitagent core's
-    # internal/evidence/liveness module — see kleos/bitmagnet feat/liveness-
+    # internal/evidence/liveness module — see the bitmagnet feat/liveness-
     # blocklist). The core uses labelled counters: observations_total has
     # {class,outcome} labels and revalidations_total has {outcome}. We sum
     # across the orthogonal dimension(s) we don't care about. All values
@@ -266,7 +255,6 @@ async def api_metrics(identity: dict = Depends(require_auth)):
 
 # ── API: Library / Torrents ───────────────────────────────────────────
 
-
 @app.get("/api/torrents")
 async def api_torrents(
     q: str = "",
@@ -300,7 +288,7 @@ async def api_torrents(
     excluded_count = 0
     for it in block.get("items") or []:
         torrent = it.get("torrent") or {}
-        title = it.get("title") or torrent.get("name") or ""
+        title = (it.get("title") or torrent.get("name") or "")
         title_lower = title.lower()
         matched_phrase_id = None
         for bp in block_phrases:
@@ -311,21 +299,20 @@ async def api_torrents(
             await _bump_block_phrase_hit(matched_phrase_id)
             excluded_count += 1
             continue
-        items.append(
-            {
-                "infoHash": it.get("infoHash"),
-                "name": title,
-                "title": it.get("title"),
-                "size": torrent.get("size") or 0,
-                "filesCount": torrent.get("filesCount") or 0,
-                "seeders": it.get("seeders") or 0,
-                "leechers": it.get("leechers") or 0,
-                "contentType": it.get("contentType"),
-                "contentSource": it.get("contentSource"),
-                "discoveredAt": it.get("createdAt"),
-                "updatedAt": it.get("updatedAt"),
-            }
-        )
+        items.append({
+            "infoHash": it.get("infoHash"),
+            "name": title,
+            "title": it.get("title"),
+            "size": torrent.get("size") or 0,
+            "filesCount": torrent.get("filesCount") or 0,
+            "seeders": it.get("seeders") or 0,
+            "leechers": it.get("leechers") or 0,
+            "contentType": it.get("contentType"),
+            "contentSource": it.get("contentSource"),
+            "contentId": it.get("contentId"),
+            "discoveredAt": it.get("createdAt"),
+            "updatedAt": it.get("updatedAt"),
+        })
     return {
         "totalCount": (block.get("totalCount") or 0) - excluded_count,
         "items": items,
@@ -337,17 +324,22 @@ async def _load_block_phrases() -> list[dict]:
     """All operator block phrases, lowercased, ordered by id. Cached at the
     request scope (cheap — typically <50 rows; SQLite handles it fine)."""
     db = await get_db()
-    cur = await db.execute("SELECT id, pattern, scope, note, hits FROM block_phrases ORDER BY id")
+    cur = await db.execute(
+        "SELECT id, pattern, scope, note, hits FROM block_phrases ORDER BY id"
+    )
     rows = await cur.fetchall()
     await cur.close()
     return [
-        {"id": r[0], "pattern": (r[1] or "").lower(), "scope": r[2], "note": r[3] or "", "hits": r[4]} for r in rows
+        {"id": r[0], "pattern": (r[1] or "").lower(), "scope": r[2], "note": r[3] or "", "hits": r[4]}
+        for r in rows
     ]
 
 
 async def _bump_block_phrase_hit(phrase_id: int) -> None:
     db = await get_db()
-    await db.execute("UPDATE block_phrases SET hits = hits + 1 WHERE id = ?", (phrase_id,))
+    await db.execute(
+        "UPDATE block_phrases SET hits = hits + 1 WHERE id = ?", (phrase_id,)
+    )
     await db.commit()
 
 
@@ -377,7 +369,6 @@ async def api_torrent_detail(info_hash: str, identity: dict = Depends(require_au
 
 # ── API: Evidence ─────────────────────────────────────────────────────
 
-
 @app.get("/api/evidence")
 async def api_evidence(
     limit: int = Query(50, ge=1, le=500),
@@ -392,7 +383,6 @@ async def api_evidence(
 
 
 # ── API: Wants ────────────────────────────────────────────────────────
-
 
 class WantCreate(BaseModel):
     title: str
@@ -417,17 +407,9 @@ async def api_wants(identity: dict = Depends(require_auth)):
         "FROM wants ORDER BY priority DESC, created_at DESC"
     )
     return [
-        {
-            "id": r[0],
-            "title": r[1],
-            "content_type": r[2],
-            "query": r[3],
-            "status": r[4],
-            "priority": r[5],
-            "created_at": r[6],
-            "updated_at": r[7],
-            "notes": r[8],
-        }
+        {"id": r[0], "title": r[1], "content_type": r[2], "query": r[3],
+         "status": r[4], "priority": r[5], "created_at": r[6],
+         "updated_at": r[7], "notes": r[8]}
         for r in rows
     ]
 
@@ -470,7 +452,6 @@ async def api_delete_want(want_id: int, identity: dict = Depends(require_auth)):
 
 
 # ── API: Settings ─────────────────────────────────────────────────────
-
 
 class SettingUpdate(BaseModel):
     value: str
@@ -518,14 +499,16 @@ async def api_audit(
 
 # ── API: Notifications ────────────────────────────────────────────────
 
-
 @app.get("/api/notifications")
 async def api_notifications(identity: dict = Depends(require_auth)):
     db = await get_db()
     rows = await db.execute_fetchall(
         "SELECT id, level, title, message, read, created_at FROM notifications ORDER BY created_at DESC LIMIT 50"
     )
-    return [{"id": r[0], "level": r[1], "title": r[2], "message": r[3], "read": bool(r[4]), "at": r[5]} for r in rows]
+    return [
+        {"id": r[0], "level": r[1], "title": r[2], "message": r[3], "read": bool(r[4]), "at": r[5]}
+        for r in rows
+    ]
 
 
 @app.put("/api/notifications/{nid}/read")
@@ -538,7 +521,6 @@ async def api_mark_read(nid: int, identity: dict = Depends(require_auth)):
 
 # ── API: TMDB poster ─────────────────────────────────────────────────
 
-
 @app.get("/api/poster/{tmdb_id}")
 async def api_poster(tmdb_id: str, media_type: str = "movie"):
     data = await tmdb.get_poster(tmdb_id, media_type)
@@ -548,7 +530,6 @@ async def api_poster(tmdb_id: str, media_type: str = "movie"):
 
 
 # ── API: GraphQL passthrough (for explorer) ───────────────────────────
-
 
 class GQLRequest(BaseModel):
     query: str
@@ -561,7 +542,6 @@ async def api_graphql_proxy(body: GQLRequest, identity: dict = Depends(require_a
 
 
 # ── API: Filters status (read-only view of bitagent core contentfilter) ──
-
 
 @app.get("/api/filters/status")
 async def api_filters_status(identity: dict = Depends(require_auth)):
@@ -586,11 +566,11 @@ async def api_filters_status(identity: dict = Depends(require_auth)):
         bare = key.split("{", 1)[0]
         metric_sum[bare] = metric_sum.get(bare, 0.0) + v
         # Parse out specific labels we care about
-        if bare == "bitagent_contentfilter_blocked_ext_total" and 'ext="' in key:
-            ext = key.split('ext="', 1)[1].split('"', 1)[0]
+        if bare == "bitagent_contentfilter_blocked_ext_total" and "ext=\"" in key:
+            ext = key.split("ext=\"", 1)[1].split("\"", 1)[0]
             blocked_ext[ext] = int(v)
-        if bare == "bitagent_contentfilter_drop_total" and 'reason="' in key:
-            reason = key.split('reason="', 1)[1].split('"', 1)[0]
+        if bare == "bitagent_contentfilter_drop_total" and "reason=\"" in key:
+            reason = key.split("reason=\"", 1)[1].split("\"", 1)[0]
             drop_reason[reason] = int(v)
 
     return {
@@ -601,7 +581,8 @@ async def api_filters_status(identity: dict = Depends(require_auth)):
             "nsfw_keyword": drop_reason.get("nsfw_keyword", 0),
         },
         "blockedExtensions": [
-            {"ext": ext, "count": blocked_ext[ext]} for ext in sorted(blocked_ext.keys(), key=lambda k: -blocked_ext[k])
+            {"ext": ext, "count": blocked_ext[ext]}
+            for ext in sorted(blocked_ext.keys(), key=lambda k: -blocked_ext[k])
         ],
         "csam": {
             "blocklistEntries": int(metric_sum.get("bitagent_csam_blocklist_entries", 0)),
@@ -613,7 +594,6 @@ async def api_filters_status(identity: dict = Depends(require_auth)):
 
 # ── API: Operator block phrases (CRUD) ───────────────────────────────
 
-
 class BlockPhrasePayload(BaseModel):
     pattern: str
     note: str = ""
@@ -623,7 +603,8 @@ class BlockPhrasePayload(BaseModel):
 async def api_block_phrases_list(identity: dict = Depends(require_auth)):
     db = await get_db()
     cur = await db.execute(
-        "SELECT id, pattern, scope, note, hits, created_at " "FROM block_phrases ORDER BY hits DESC, id DESC"
+        "SELECT id, pattern, scope, note, hits, created_at "
+        "FROM block_phrases ORDER BY hits DESC, id DESC"
     )
     rows = await cur.fetchall()
     await cur.close()
@@ -643,7 +624,9 @@ async def api_block_phrases_list(identity: dict = Depends(require_auth)):
 
 
 @app.post("/api/block-phrases")
-async def api_block_phrases_create(payload: BlockPhrasePayload, identity: dict = Depends(require_auth)):
+async def api_block_phrases_create(
+    payload: BlockPhrasePayload, identity: dict = Depends(require_auth)
+):
     pattern = payload.pattern.strip()
     if not pattern:
         raise HTTPException(400, "pattern must be non-empty")
@@ -652,7 +635,8 @@ async def api_block_phrases_create(payload: BlockPhrasePayload, identity: dict =
     db = await get_db()
     try:
         cur = await db.execute(
-            "INSERT INTO block_phrases (pattern, scope, note, hits, created_at) " "VALUES (?, 'title', ?, 0, ?)",
+            "INSERT INTO block_phrases (pattern, scope, note, hits, created_at) "
+            "VALUES (?, 'title', ?, 0, ?)",
             (pattern, payload.note.strip(), time.time()),
         )
         await db.commit()
@@ -660,12 +644,14 @@ async def api_block_phrases_create(payload: BlockPhrasePayload, identity: dict =
     except Exception as e:
         # UNIQUE constraint = duplicate pattern
         if "UNIQUE" in str(e):
-            raise HTTPException(409, "pattern already exists") from e
+            raise HTTPException(409, "pattern already exists")
         raise
 
 
 @app.delete("/api/block-phrases/{phrase_id}")
-async def api_block_phrases_delete(phrase_id: int, identity: dict = Depends(require_auth)):
+async def api_block_phrases_delete(
+    phrase_id: int, identity: dict = Depends(require_auth)
+):
     db = await get_db()
     cur = await db.execute("DELETE FROM block_phrases WHERE id = ?", (phrase_id,))
     await db.commit()
@@ -676,12 +662,10 @@ async def api_block_phrases_delete(phrase_id: int, identity: dict = Depends(requ
 
 # ── API: Demo data seeder ─────────────────────────────────────────────
 
-
 @app.post("/api/seed-demo")
 async def api_seed_demo(identity: dict = Depends(require_auth)):
     """Populate the dashboard with realistic demo data for presentation."""
     import random
-
     db = await get_db()
 
     # Seed wants
@@ -736,7 +720,9 @@ async def api_seed_demo(identity: dict = Depends(require_auth)):
         ("log_level", "debug", "info", "operator"),
     ]
     for key, old, new, actor in demo_audits:
-        existing = await db.execute_fetchall("SELECT id FROM audit_log WHERE key = ? AND new_value = ?", (key, new))
+        existing = await db.execute_fetchall(
+            "SELECT id FROM audit_log WHERE key = ? AND new_value = ?", (key, new)
+        )
         if not existing:
             await db.execute(
                 "INSERT INTO audit_log (key, old_value, new_value, actor, timestamp) VALUES (?, ?, ?, ?, ?)",
@@ -749,5 +735,4 @@ async def api_seed_demo(identity: dict = Depends(require_auth)):
 
 if __name__ == "__main__":
     import uvicorn
-
     uvicorn.run("app:app", host=settings.host, port=settings.port, reload=True)
