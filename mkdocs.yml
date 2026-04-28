@@ -67,11 +67,15 @@ markdown_extensions:
 nav:
   - Home: index.md
   - Quickstart: quickstart.md
+  - Deployment: deployment.md
   - FAQ: faq.md
   - Concepts:
       - Architecture: concepts/architecture.md
   - Dashboard:
       - UI Guide: ui-guide.md
+      - Wants: wants.md
+      - Evidence Pipeline: evidence.md
+      - System Tab: system-tab.md
       - API Reference: reference/dashboard-api.md
   - Integrations:
       - Sonarr: integrations/sonarr.md
@@ -79,6 +83,8 @@ nav:
       - Prowlarr: integrations/prowlarr.md
       - Lidarr: integrations/lidarr.md
       - Private tracker mode: integrations/private-tracker-mode.md
+  - Operations:
+      - Troubleshooting: troubleshooting.md
   - Project:
       - Improvements vs upstream: project/improvements.md
       - Legal disclaimer: legal/disclaimer.md
