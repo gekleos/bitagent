@@ -152,7 +152,7 @@ From the quality-evidence pass shortly after the v1.17 release:
 | Wantbridge yield (Tier-0) | 2.07% | 30–50% |
 | Operator grab share in Sonarr history | 38.2% (191/500) | — |
 
-The BEP-9 success rate and wantbridge yield are the active improvement targets — they're explicitly tracked on the [project/improvements.md](../project/improvements.md) roadmap. Numbers are improving as the wantbridge layer matures and the LLM stage gets tuned.
+The BEP-9 success rate and wantbridge yield are active improvement targets. Numbers improve as the wantbridge layer matures and the LLM stage gets tuned.
 
 ## Profiling
 

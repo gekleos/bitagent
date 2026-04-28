@@ -68,5 +68,4 @@ If you're an operator chasing a specific high-value title that BitAgent doesn't 
 
 - [Wants tab guide](../wants.md)
 - [Concepts / Classification](classification.md) — how matched torrents flow through the priority lane
-- [Project / Improvements](../project/improvements.md)
 - [Troubleshooting](../troubleshooting.md)

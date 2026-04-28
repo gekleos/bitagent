@@ -61,7 +61,6 @@ MIT-licensed. No telemetry. No accounts. Just an indexer you own.
 - [Integrations](integrations/sonarr.md) --
   Per-app setup guides for Sonarr, Radarr, Prowlarr, Lidarr,
   and Readarr
-- [Dashboard guide](project/improvements.md) --
   Walkthrough of the operator dashboard and the improvements
   over upstream bitmagnet
 
