@@ -11,7 +11,7 @@ BitAgent exposes a GraphQL endpoint at `:3333/graphql`. The schema is generated 
 | Auth | none by default — front with a reverse proxy for public exposure |
 | Schema introspection | enabled |
 
-Tools that work out of the box: Apollo Studio, Insomnia, Bruno, IntelliJ HTTP client, the gqlgen playground.
+Tools that work out of the box: Insomnia, Bruno, Altair, IntelliJ HTTP client, GraphiQL, and the bundled gqlgen playground at `GET /graphql`.
 
 ## Top-level Query fields
 

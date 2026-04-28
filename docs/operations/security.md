@@ -63,7 +63,7 @@ BitAgent participates in the public BitTorrent DHT. There is no setting that dis
 
 BitAgent does *not* download torrent payloads — only metadata. The exposure window is bounded to the metadata phase. Still, for any deployment where IP exposure is a concern, the standard mitigation is:
 
-- Run BitAgent behind a VPN tunnel (Gluetun is what the operator-internal stack uses).
+- Run BitAgent behind a VPN tunnel (Gluetun is the standard choice for advanced deployments).
 - Use a VPN provider that supports port forwarding so DHT inbound traffic gets symmetric reach.
 
 CSAM — the one category where post-fetch detection is too late — has its own pre-fetch double-hash defense. See [concepts/csam-defense.md](../concepts/csam-defense.md).
@@ -127,7 +127,7 @@ Mismatched or missing token → request rejected, no row written, increments `bi
 ### `TORZNAB_API_KEY`
 
 1. Generate the new key: `openssl rand -hex 32`.
-2. Update `TORZNAB_API_KEY` in the BitAgent env (`.env` file or Infisical), restart the BitAgent container.
+2. Update `TORZNAB_API_KEY` in the BitAgent env (`.env` file or your secrets manager), restart the BitAgent container.
 3. Update each `*arr` indexer's API Key field to the new value.
 4. Test each indexer connection.
 5. The old key is now dead — no need to retire it explicitly.

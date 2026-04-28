@@ -34,7 +34,7 @@ BitAgent's HTTP server has no opinions about auth — it trusts whoever connects
 | Variable | Default | Purpose |
 |---|---|---|
 | `TORZNAB_API_KEY` | *(none)* | When set, every `/torznab/api` request must include `apikey=<value>`. Empty leaves `/torznab` open — fine on a tailnet or behind a reverse proxy with its own auth, **not fine on the open internet.** Constant-time compare. |
-| `EVIDENCE_WEBHOOK_SECRET` | *(none)* | Shared secret for the `*arr` webhook ingester. Mirror this value as the `X-Evidence-Token` Custom Header on every Sonarr/Radarr/Lidarr/Readarr Connect → Webhook configuration. Operator-internal stack only. |
+| `EVIDENCE_WEBHOOK_SECRET` | *(none)* | Shared secret for the `*arr` webhook ingester. Mirror this value as the `X-Evidence-Token` Custom Header on every Sonarr/Radarr/Lidarr/Readarr Connect → Webhook configuration. Advanced deployments only. |
 
 ## Classifier
 
@@ -92,9 +92,9 @@ Periodic deletion of torrents that haven't been seen in DHT announcements for a 
 
 The default predicate is conservative: no canonical label, no evidence record, age > 60 days, `updated_at` older than 180 days, and every torrent source reports `seeders=0`. Validate the dry-run trend before flipping `ENABLE_PURGE`.
 
-## Evidence-source ingestors (operator-internal)
+## Evidence-source ingestors (advanced)
 
-These variables configure pollers for downstream `*arr` apps and qBittorrent. They are present in the operator-internal `deploy/docker-compose.yml` (Apollo Portainer stack), **not** in `examples/docker-compose.public.yml`. Empty values disable the corresponding source without error — the worker logs `no X instances configured` and idles.
+These variables configure pollers for downstream `*arr` apps and qBittorrent. They are present in the larger `deploy/docker-compose.yml` reference compose file, **not** in `examples/docker-compose.public.yml`. Empty values disable the corresponding source without error — the worker logs `no X instances configured` and idles.
 
 | Variable | Default | Purpose |
 |---|---|---|
@@ -103,13 +103,13 @@ These variables configure pollers for downstream `*arr` apps and qBittorrent. Th
 | `RADARR_URL` / `RADARR_API_KEY` | *(none)* | Radarr base URL + API key. |
 | `READARR_URL` / `READARR_API_KEY` | *(none)* | Readarr base URL + API key. |
 | `LIDARR_URL` / `LIDARR_API_KEY` | *(none)* | Lidarr base URL + API key. |
-| `QB_APOLLO_URL` | *(none)* | qBittorrent WebUI URL. |
-| `QB_APOLLO_USERNAME` | *(none)* | qBittorrent WebUI username. |
-| `QB_APOLLO_PASSWORD` | *(none)* | qBittorrent WebUI password. |
+| `QB_<NAME>_URL` | *(none)* | qBittorrent WebUI URL for the named instance. |
+| `QB_<NAME>_USERNAME` | *(none)* | qBittorrent WebUI username for the named instance. |
+| `QB_<NAME>_PASSWORD` | *(none)* | qBittorrent WebUI password for the named instance. |
 
-## VPN integration (operator-internal)
+## VPN integration (advanced)
 
-The operator-internal stack runs BitAgent behind Gluetun for VPN-egressed DHT traffic. Same scope note as evidence-source ingestors — these are not present in the public quickstart compose. See `deploy/README.md` for full provider notes.
+Advanced deployments can run BitAgent behind Gluetun for VPN-egressed DHT traffic. Same scope note as evidence-source ingestors — these are not present in the public quickstart compose. See the Gluetun documentation for full provider notes.
 
 | Variable | Default | Purpose |
 |---|---|---|

@@ -16,11 +16,11 @@ Add this job to your Prometheus `scrape_configs`:
   static_configs:
     - targets: ['localhost:3333']
       labels:
-        instance: apollo
+        instance: bitagent-host
         service: bitagent
 ```
 
-Replace `localhost:3333` with the Tailscale IP / service hostname when scraping from a different host.
+Replace `localhost:3333` with the private network IP or service hostname when scraping from a different host.
 
 ## Dual-emit window
 

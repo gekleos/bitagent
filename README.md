@@ -1,4 +1,4 @@
-[![Release](https://img.shields.io/badge/status-RC-blue)](https://github.com/gekleos/bitagent/releases) [![CI](https://img.shields.io/github/actions/workflow/status/gekleos/bitagent/ci.yml?branch=main)](https://github.com/gekleos/bitagent/actions) [![License: MIT](https://img.shields.io/github/license/gekleos/bitagent)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/gekleos/bitagent?color=blue)](https://github.com/gekleos/bitagent/releases) [![CI](https://img.shields.io/github/actions/workflow/status/gekleos/bitagent/ci.yml?branch=main)](https://github.com/gekleos/bitagent/actions) [![Docker Pulls](https://img.shields.io/docker/pulls/gekleos/bitagent-ui)](https://hub.docker.com/r/gekleos/bitagent-ui) [![License: MIT](https://img.shields.io/github/license/gekleos/bitagent)](LICENSE)
 
 # BitAgent
 

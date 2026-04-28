@@ -43,7 +43,7 @@ Returns the identity of the currently authenticated user.
 {
   "id": "usr_abc123",
   "method": "api_key",
-  "display": "snorton"
+  "display": "operator"
 }
 ```
 
@@ -432,7 +432,7 @@ Returns an audit log of setting changes.
       "action": "override_set",
       "old_value": 3600,
       "new_value": 1800,
-      "changed_by": "snorton",
+      "changed_by": "operator",
       "changed_at": "2026-04-27T11:00:00.000Z"
     }
   ]

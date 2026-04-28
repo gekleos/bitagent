@@ -76,11 +76,6 @@ Kademlia routing table. The structured peer cache the DHT crawler maintains in m
 ### LLM rerank stage
 Optional final classifier stage that calls an external LLM for ambiguous torrents that CEL couldn't classify. Two-layer opt-in (`Enabled` + `EnableLive`), aggressively gated, sha256 LRU cached. See [concepts/classification.md#stage-3-llm-rerank-stage](classification.md#stage-3-llm-rerank-stage).
 
-## O
-
-### operator-internal
-Refers to the Apollo / Portainer / Gluetun-specific deployment in `deploy/docker-compose.yml`. NOT the public quickstart. Operator-internal env vars (`SONARR_URL`, `EVIDENCE_WEBHOOK_SECRET`, `VPN_*`, etc.) are not present in `examples/docker-compose.public.yml`.
-
 ## P
 
 ### peer

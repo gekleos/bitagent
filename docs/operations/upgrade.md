@@ -31,17 +31,17 @@ docker compose -f examples/docker-compose.public.yml \
 
 Wait ~3 minutes for the full restart and DHT re-bootstrap. The Postgres data volume persists — you do not lose the indexed corpus.
 
-## Image-tagged upgrade (operator-internal)
+## Image-tagged upgrade
 
-For deployments using `registry.norvi.tech/kleos/bitagent:<tag>` (the operator-internal Apollo / Portainer pattern):
+For deployments that pull a tagged image rather than building from source:
 
-1. Bump `BITAGENT_IMAGE_TAG` in your secrets store (Infisical, Vault, or environment).
-2. Trigger a Portainer redeploy — the standard pattern is git-backed stack with 5m auto-update + GitLab webhook on any push to `deploy/`.
+1. Bump the BitAgent image tag in your environment file or secrets manager.
+2. Trigger your orchestrator's redeploy (Portainer, Compose, Kubernetes, etc.).
 3. Verify the container actually recreated:
    ```bash
    docker inspect bitagent --format '{{ .State.StartedAt }}'
    ```
-   `StartedAt` must be newer than the merge commit time. If it's older, the redeploy was a no-op (image digest unchanged) — force a redeploy with `pullImage: true` in Portainer's stack config.
+   `StartedAt` must be newer than the new image's build time. If it's older, the redeploy was a no-op (image digest unchanged) — force a fresh pull with `docker compose pull && docker compose up -d --force-recreate`.
 
 ## Pre-upgrade backup (MINOR / MAJOR)
 
@@ -119,11 +119,13 @@ The dump-restore path is safer than goose-down — `down` migrations may not be 
 
 ### Stale image cache
 
-Webhook fires HTTP 204 but `docker pull :latest` returns "access forbidden" — the registry login expired. Symptom: container restarts but version unchanged.
+The container restarts but the version is unchanged. The most common cause is that the container runtime is using a cached `:latest` image because the registry pull failed silently — the redeploy hook returned success but `docker pull` returned an auth or network error and the local cache was reused.
 
 ```bash
-docker login registry.norvi.tech -u kleos
-# then redeploy
+# Re-authenticate to your registry (substitute your registry hostname)
+docker login ghcr.io
+# then force a fresh pull and recreate
+docker compose pull && docker compose up -d --force-recreate
 ```
 
 ### Schema drift after a partial migration

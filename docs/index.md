@@ -70,7 +70,7 @@ MIT-licensed. No telemetry. No accounts. Just an indexer you own.
 ## License and lineage
 
 BitAgent is released under the
-[MIT License](https://github.com/gekleos/bitagent-staging/blob/main/LICENSE).
+[MIT License](https://github.com/gekleos/bitagent/blob/main/LICENSE).
 It is a fork of
 [bitmagnet-io/bitmagnet](https://github.com/bitmagnet-io/bitmagnet) --
 full credit to the upstream contributors whose work made this possible.

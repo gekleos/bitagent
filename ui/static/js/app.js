@@ -142,8 +142,8 @@ async function loadDashboard() {
     document.getElementById('statEvidence').textContent = fmtNum(stats.totalEvidence);
     // Crawl rate (DHT requests per minute, sliding window)
     document.getElementById('statCrawlRate').textContent = fmtNum(stats.crawlRatePerMin);
-    // Success rate + Dead Blocked (liveness pipeline; zero until the core ships
-    // the new metrics — see kleos/bitmagnet feat/liveness-blocklist)
+    // Success rate + Dead Blocked (liveness pipeline; zero until the core
+    // ships the corresponding metrics)
     const liveness = stats.liveness || {};
     const success = liveness.successRate || 0;
     const successEl = document.getElementById('statSuccessRate');
