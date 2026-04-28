@@ -1,4 +1,20 @@
+"""GraphQL + Prometheus client for the BitAgent core.
+
+The core's GraphQL schema (bitagent / bitmagnet) exposes:
+    version() -> String
+    workers()
+    health()
+    queue()
+    torrent(infoHash)
+    torrentContent { search(input: TorrentContentSearchQueryInput) }
+
+There is no `searchTorrents`, no `systemStats`, and no `listEvidenceEvents`
+in the upstream schema — those were placeholders in the public-release prep.
+This module wraps the real schema and derives the dashboard's stats from
+torrentContent.search aggregations + the Prometheus /metrics scrape.
+"""
 from __future__ import annotations
+
 import httpx
 from config import settings
 
@@ -35,57 +51,80 @@ async def fetch_metrics() -> str:
         return ""
 
 
+# ── Real schema queries ──────────────────────────────────────────────────
+
 SEARCH_TORRENTS = """
-query SearchTorrents($query: String, $limit: Int, $offset: Int, $contentType: String) {
-    searchTorrents(query: $query, limit: $limit, offset: $offset, contentType: $contentType) {
-        totalCount
-        items {
-            infoHash
-            name
-            size
-            seeders
-            leechers
-            contentType
-            classifierScore
-            discoveredAt
-            files { path size }
-            release { title year quality source }
+query Search($input: TorrentContentSearchQueryInput!) {
+  torrentContent {
+    search(input: $input) {
+      totalCount
+      hasNextPage
+      items {
+        infoHash
+        title
+        contentType
+        contentSource
+        seeders
+        leechers
+        createdAt
+        updatedAt
+        torrent {
+          name
+          size
+          filesCount
         }
+      }
     }
+  }
 }
 """
 
 TORRENT_DETAIL = """
-query TorrentDetail($infoHash: String!) {
-    torrent(infoHash: $infoHash) {
-        infoHash name size seeders leechers contentType
-        classifierScore discoveredAt magnetUri
-        files { path size }
-        release { title year quality source imdbId tmdbId }
-        evidence { id source result timestamp }
+query TorrentDetail($infoHash: Hash20!) {
+  torrent(infoHashes: [$infoHash]) {
+    infoHash
+    name
+    size
+    filesCount
+    files { path size }
+  }
+  torrentContent {
+    search(input: { infoHashes: [$infoHash], limit: 1 }) {
+      items {
+        infoHash
+        title
+        contentType
+        seeders
+        leechers
+      }
     }
+  }
 }
 """
 
-EVIDENCE_EVENTS = """
-query EvidenceEvents($limit: Int, $offset: Int) {
-    listEvidenceEvents(limit: $limit, offset: $offset) {
-        totalCount
-        items {
-            id source infoHash result timestamp
-            torrentName contentType
-        }
-    }
-}
-"""
-
+# Stats: totalCount + per-contentType aggregations in one round-trip.
+# `facets:{contentType:{aggregate:true}}` triggers the contentType array.
 SYSTEM_STATS = """
 query SystemStats {
-    systemStats {
-        totalTorrents totalReleases totalEvidence
-        dhtPeerCount indexerThroughput cacheHitRatio
-        uptimeSeconds lastCrawlAt
-        categoryBreakdown { category count }
+  version
+  torrentContent {
+    search(input: {
+      queryString: "",
+      limit: 1,
+      totalCount: true,
+      facets: { contentType: { aggregate: true } }
+    }) {
+      totalCount
+      aggregations {
+        contentType { value count }
+      }
     }
+  }
 }
 """
+
+# Evidence events live in the local SQLite (populated by *arr webhooks),
+# NOT in the bitagent core. The core has no concept of operator evidence.
+# We keep the constant as a sentinel for any caller that imports it but
+# the actual evidence list endpoint reads from database.py.
+EVIDENCE_EVENTS = "# evidence comes from the local SQLite — see database.list_evidence()"

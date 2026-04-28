@@ -58,6 +58,19 @@ async def _init_tables(db: aiosqlite.Connection):
             read INTEGER NOT NULL DEFAULT 0,
             created_at REAL NOT NULL
         );
+        -- Operator-managed text patterns that get filtered out of the
+        -- Library tab (and, in a future MR, fed into the bitagent core's
+        -- contentfilter chain via env). `pattern` is matched as a
+        -- case-insensitive substring against the torrent title.
+        -- scope is reserved for future use (currently always 'title').
+        CREATE TABLE IF NOT EXISTS block_phrases (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            pattern TEXT NOT NULL UNIQUE,
+            scope TEXT NOT NULL DEFAULT 'title',
+            note TEXT DEFAULT '',
+            hits INTEGER NOT NULL DEFAULT 0,
+            created_at REAL NOT NULL
+        );
     """)
     await db.commit()
 
