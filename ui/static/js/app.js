@@ -139,36 +139,94 @@ async function loadDashboard() {
   if (stats) {
     document.getElementById('statPeers').textContent = fmtNum(stats.dhtPeerCount);
     document.getElementById('statTorrents').textContent = fmtNum(stats.totalTorrents);
-    document.getElementById('statReleases').textContent = fmtNum(stats.totalReleases);
     document.getElementById('statEvidence').textContent = fmtNum(stats.totalEvidence);
-    document.getElementById('statThroughput').textContent = fmtNum(stats.indexerThroughput);
-    const cacheRatio = stats.cacheHitRatio || 0;
-    document.getElementById('statCache').textContent = `${(cacheRatio * 100).toFixed(1)}%`;
-    document.getElementById('cacheBar').style.width = `${cacheRatio * 100}%`;
+    // Crawl rate (DHT requests per minute, sliding window)
+    document.getElementById('statCrawlRate').textContent = fmtNum(stats.crawlRatePerMin);
+    // Success rate + Dead Blocked (liveness pipeline; zero until the core ships
+    // the new metrics — see kleos/bitmagnet feat/liveness-blocklist)
+    const liveness = stats.liveness || {};
+    const success = liveness.successRate || 0;
+    const successEl = document.getElementById('statSuccessRate');
+    if (successEl) {
+      successEl.textContent = (liveness.observationsAlive + liveness.observationsSuspect) > 0
+        ? `${(success * 100).toFixed(1)}%` : '—';
+    }
+    const successBar = document.getElementById('successBar');
+    if (successBar) successBar.style.width = `${success * 100}%`;
+    const blEl = document.getElementById('statBlacklist');
+    if (blEl) blEl.textContent = fmtNum(liveness.blacklistSize || 0);
+    const blockRateEl = document.getElementById('statBlockRate');
+    if (blockRateEl) blockRateEl.textContent = fmtNum(liveness.blockRatePerMin || 0);
     document.getElementById('statUptime').textContent = fmtTime(stats.uptimeSeconds);
     document.getElementById('statLastCrawl').textContent = fmtDate(stats.lastCrawlAt);
 
     const chart = document.getElementById('categoryChart');
     if (stats.categoryBreakdown && stats.categoryBreakdown.length > 0) {
-      const total = stats.categoryBreakdown.reduce((s, c) => s + c.count, 0);
-      const colors = { movie: 'var(--color-info)', tv_show: 'var(--color-accent)', music: 'var(--color-success)', ebook: 'var(--color-warning)', unknown: 'var(--color-fg-subtle)' };
-      chart.innerHTML = stats.categoryBreakdown.map(c => {
+      // Sort largest first so the bar lengths form a clean visual descent
+      const breakdown = [...stats.categoryBreakdown].sort((a, b) => b.count - a.count);
+      const total = breakdown.reduce((s, c) => s + c.count, 0);
+      // Bars are scaled relative to the largest slice (not the total) so even
+      // small categories get a visible bar; the percent column carries the
+      // share-of-total reading.
+      const max = Math.max(...breakdown.map(c => c.count), 1);
+      chart.innerHTML = breakdown.map(c => {
         const pct = ((c.count / total) * 100).toFixed(1);
-        return `<div class="flex items-center justify-between" style="margin-bottom:var(--space-3)">
-          <div class="flex items-center gap-3">
-            <div style="width:12px;height:12px;border-radius:3px;background:${colors[c.category] || 'var(--color-fg-subtle)'}"></div>
-            <span class="text-sm">${escHtml(c.category)}</span>
-          </div>
-          <div class="flex items-center gap-3">
-            <div class="progress" style="width:120px"><div class="progress-bar" style="width:${pct}%;background:${colors[c.category] || 'var(--color-fg-subtle)'}"></div></div>
-            <span class="text-sm font-mono" style="min-width:50px;text-align:right">${fmtNum(c.count)}</span>
-            <span class="text-xs text-subtle" style="min-width:40px;text-align:right">${pct}%</span>
-          </div>
+        const barW = ((c.count / max) * 100).toFixed(1);
+        const meta = categoryMeta(c.category);
+        return `<div class="cat-row">
+          <div class="cat-icon" style="color:${meta.color}">${meta.svg}</div>
+          <div class="cat-label">${escHtml(meta.label)}</div>
+          <div class="cat-bar"><div class="cat-bar-fill" style="width:${barW}%;background:${meta.color}"></div></div>
+          <div class="cat-count">${fmtNum(c.count)}</div>
+          <div class="cat-pct">${pct}%</div>
         </div>`;
       }).join('');
     }
   }
   loadRecentActivity();
+}
+
+// Media type → icon + display label + color. Single source of truth so the
+// Library tab, Wants tab, and Dashboard chart all show consistent visuals.
+function categoryMeta(cat) {
+  const ICONS = {
+    movie:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/></svg>',
+    tv_show:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="15" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>',
+    music:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>',
+    ebook:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>',
+    audiobook: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0118 0v6"/><path d="M21 19a2 2 0 01-2 2h-1v-6h3v4zM3 19a2 2 0 002 2h1v-6H3v4z"/></svg>',
+    software:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>',
+    game:      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="11" x2="10" y2="11"/><line x1="8" y1="9" x2="8" y2="13"/><line x1="15" y1="12" x2="15.01" y2="12"/><line x1="18" y1="10" x2="18.01" y2="10"/><path d="M17.32 5H6.68a4 4 0 00-3.978 3.59c-.006.052-.01.101-.017.152C2.604 9.416 2 14.456 2 16a3 3 0 003 3c1 0 1.5-.5 2-1l1.414-1.414A2 2 0 019.828 16h4.344a2 2 0 011.414.586L17 18c.5.5 1 1 2 1a3 3 0 003-3c0-1.545-.604-6.584-.685-7.258-.007-.05-.011-.1-.017-.151A4 4 0 0017.32 5z"/></svg>',
+    porn:      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>',
+    unknown:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+  };
+  const LABELS = {
+    movie: 'Movie',
+    tv_show: 'TV Show',
+    music: 'Music',
+    ebook: 'eBook',
+    audiobook: 'Audiobook',
+    software: 'Software',
+    game: 'Game',
+    porn: 'Adult',
+    unknown: 'Unknown',
+  };
+  const COLORS = {
+    movie:     'var(--color-info)',
+    tv_show:   'var(--color-accent)',
+    music:     'var(--color-success)',
+    ebook:     'var(--color-warning)',
+    audiobook: '#a78bfa',
+    software:  '#94a3b8',
+    game:      '#f87171',
+    porn:      '#9ca3af',
+    unknown:   'var(--color-fg-subtle)',
+  };
+  return {
+    svg: ICONS[cat] || ICONS.unknown,
+    label: LABELS[cat] || cat,
+    color: COLORS[cat] || COLORS.unknown,
+  };
 }
 
 async function loadRecentActivity() {
@@ -501,6 +559,143 @@ function switchSettingsTab(tab) {
   });
   if (tab === 'audit') loadAuditLog();
   if (tab === 'classifier') loadClassifierRules();
+  if (tab === 'liveness') loadLivenessOps();
+  if (tab === 'filters') loadFiltersStatus();
+  if (tab === 'blocklists') loadBlockLists();
+}
+
+async function loadFiltersStatus() {
+  const data = await api('/api/filters/status');
+  if (!data) return;
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  const drops = data.drops || {};
+  set('filterNsfwCount', fmtNum(drops.nsfw_keyword || 0));
+  set('filterNonLatinCount', fmtNum(drops.non_latin_script || 0));
+  set('filterExtCount', fmtNum(drops.blocked_extension || 0));
+  set('filterExamined', fmtNum(data.examined || 0));
+  // Toggle states reflect activity (cumulative > 0). The bitagent core
+  // doesn't expose env-var snapshots in /metrics, so this is the closest
+  // signal we have without parsing the container's environment.
+  const togglePill = (id, active) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = active
+      ? '<span class="pill pill-success">enabled</span>'
+      : '<span class="pill pill-neutral">no activity</span>';
+  };
+  togglePill('filterNsfwToggle', (drops.nsfw_keyword || 0) > 0);
+  togglePill('filterNonLatinToggle', (drops.non_latin_script || 0) > 0);
+  togglePill('filterExtToggle', (drops.blocked_extension || 0) > 0);
+  // Per-extension breakdown
+  const exts = data.blockedExtensions || [];
+  const ext = document.getElementById('filterExtBreakdown');
+  if (ext) {
+    if (exts.length === 0) {
+      ext.innerHTML = '<div class="empty-state" style="padding:var(--space-6)"><p class="text-sm text-muted">No extensions blocked yet.</p></div>';
+    } else {
+      ext.innerHTML = exts.map(e => `
+        <div class="ext-cell">
+          <span class="ext-name font-mono">.${escHtml(e.ext)}</span>
+          <span class="ext-count font-mono">${fmtNum(e.count)}</span>
+        </div>`).join('');
+    }
+    set('filterExtTotal', `${exts.length} extension${exts.length === 1 ? '' : 's'} on the list`);
+  }
+}
+
+async function loadBlockLists() {
+  // Top half — automatic lists (liveness + CSAM) read from /api/stats and /api/filters/status
+  const [stats, filters] = await Promise.all([api('/api/stats'), api('/api/filters/status')]);
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  if (stats) {
+    const liv = stats.liveness || {};
+    set('blListLivenessSize', fmtNum(liv.blacklistSize || 0));
+    set('blListLivenessExcluded', fmtNum(liv.totalExcluded || 0));
+    set('blListLivenessRate', fmtNum(liv.blockRatePerMin || 0));
+  }
+  if (filters && filters.csam) {
+    set('blListCsamEntries', fmtNum(filters.csam.blocklistEntries || 0));
+    set('blListCsamLookups', fmtNum(filters.csam.lookups || 0));
+    set('blListCsamExports', fmtNum(filters.csam.exports || 0));
+  }
+  // Bottom — operator phrases
+  await loadBlockPhrasesTable();
+}
+
+async function loadBlockPhrasesTable() {
+  const data = await api('/api/block-phrases');
+  const tbody = document.getElementById('blockPhraseTable');
+  if (!tbody) return;
+  if (!data || !data.items || data.items.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state" style="padding:var(--space-6)">
+      <p class="text-sm text-muted">No phrases yet. Add a phrase above and it'll be filtered out of the Library tab on the next refresh.</p>
+    </div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = data.items.map(p => `
+    <tr>
+      <td><code class="font-mono text-sm">${escHtml(p.pattern)}</code></td>
+      <td class="text-sm text-muted">${escHtml(p.note || '—')}</td>
+      <td class="font-mono text-sm" style="text-align:right">${fmtNum(p.hits)}</td>
+      <td class="text-xs text-subtle">${fmtAgo(p.createdAt)}</td>
+      <td style="text-align:right">
+        <button class="btn btn-secondary btn-sm" onclick="deleteBlockPhrase(${p.id})">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+        </button>
+      </td>
+    </tr>`).join('');
+}
+
+async function addBlockPhrase() {
+  const input = document.getElementById('blockPhraseInput');
+  const noteInput = document.getElementById('blockPhraseNote');
+  const errEl = document.getElementById('blockPhraseError');
+  const pattern = (input.value || '').trim();
+  const note = (noteInput.value || '').trim();
+  if (!pattern) { input.focus(); return; }
+  errEl.style.display = 'none';
+  errEl.textContent = '';
+  try {
+    const resp = await fetch(API + '/api/block-phrases', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pattern, note }),
+    });
+    if (!resp.ok) {
+      const body = await resp.json().catch(() => ({}));
+      errEl.textContent = body.detail || `${resp.status} ${resp.statusText}`;
+      errEl.style.display = 'block';
+      return;
+    }
+    input.value = '';
+    noteInput.value = '';
+    await loadBlockPhrasesTable();
+  } catch (e) {
+    errEl.textContent = String(e);
+    errEl.style.display = 'block';
+  }
+}
+
+async function deleteBlockPhrase(id) {
+  await fetch(API + '/api/block-phrases/' + id, { method: 'DELETE' });
+  await loadBlockPhrasesTable();
+}
+
+async function loadLivenessOps() {
+  // Reuses /api/stats since the liveness counters are emitted there.
+  const stats = await api('/api/stats');
+  if (!stats) return;
+  const liv = stats.liveness || {};
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  set('livenessObsAlive', fmtNum(liv.observationsAlive || 0));
+  set('livenessObsSuspect', fmtNum(liv.observationsSuspect || 0));
+  set('livenessBlacklist', fmtNum(liv.blacklistSize || 0));
+  set('livenessExcluded', fmtNum(liv.totalExcluded || 0));
+  const reval = liv.revalidations || {};
+  const haveReval = (reval.aliveAgain + reval.stillDead) > 0;
+  set('livenessRecoveryRate', haveReval ? `${(reval.recoveryRate * 100).toFixed(1)}%` : '—');
+  set('livenessRevalidAlive', fmtNum(reval.aliveAgain || 0));
+  set('livenessRevalidDead', fmtNum(reval.stillDead || 0));
 }
 
 function toggleKeyVisibility(id) {
