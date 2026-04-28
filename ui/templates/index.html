@@ -142,16 +142,17 @@
             <div class="stat-label">Total Torrents</div>
             <div class="stat-value" id="statTorrents">--</div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card" title="DHT requests per minute (sample_infohashes + get_peers). Live, sliding 5-min window.">
             <div class="flex items-center justify-between">
               <div class="stat-icon orange">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
               </div>
             </div>
-            <div class="stat-label">Releases</div>
-            <div class="stat-value" id="statReleases">--</div>
+            <div class="stat-label">Crawl Rate</div>
+            <div class="stat-value" id="statCrawlRate">--</div>
+            <div class="text-xs text-subtle">DHT req/min</div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card" title="Webhook events from *arr applications recorded in the local sidecar.">
             <div class="flex items-center justify-between">
               <div class="stat-icon red">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
@@ -160,25 +161,25 @@
             <div class="stat-label">Evidence Events</div>
             <div class="stat-value" id="statEvidence">--</div>
           </div>
-          <div class="stat-card">
-            <div class="flex items-center justify-between">
-              <div class="stat-icon blue">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-              </div>
-            </div>
-            <div class="stat-label">Throughput</div>
-            <div class="stat-value" id="statThroughput">--</div>
-            <div class="text-xs text-subtle">torrents/min</div>
-          </div>
-          <div class="stat-card">
+          <div class="stat-card" title="Of all per-infohash liveness observations, fraction that resolved alive (qB seeding/uploading or *arr import success). The KPI for whether the system delivers working torrents.">
             <div class="flex items-center justify-between">
               <div class="stat-icon green">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
               </div>
             </div>
-            <div class="stat-label">Cache Hit Ratio</div>
-            <div class="stat-value" id="statCache">--</div>
-            <div class="progress mt-2"><div class="progress-bar green" id="cacheBar" style="width:0%"></div></div>
+            <div class="stat-label">Success Rate</div>
+            <div class="stat-value" id="statSuccessRate">--</div>
+            <div class="progress mt-2"><div class="progress-bar green" id="successBar" style="width:0%"></div></div>
+          </div>
+          <div class="stat-card" title="Per-infohash liveness blocklist size. Torrents marked dead by the qB stall observer or *arr download-failed events; excluded from Torznab responses until revalidation succeeds.">
+            <div class="flex items-center justify-between">
+              <div class="stat-icon red">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+              </div>
+            </div>
+            <div class="stat-label">Dead Blocked</div>
+            <div class="stat-value" id="statBlacklist">--</div>
+            <div class="text-xs text-subtle"><span id="statBlockRate">--</span> filtered/min</div>
           </div>
         </div>
 
@@ -362,6 +363,9 @@
           <button class="tab-btn" data-stab="integrations" onclick="switchSettingsTab('integrations')">Integrations</button>
           <button class="tab-btn" data-stab="retention" onclick="switchSettingsTab('retention')">Retention</button>
           <button class="tab-btn" data-stab="classifier" onclick="switchSettingsTab('classifier')">Classifier</button>
+          <button class="tab-btn" data-stab="liveness" onclick="switchSettingsTab('liveness')">Liveness</button>
+          <button class="tab-btn" data-stab="filters" onclick="switchSettingsTab('filters')">Filters</button>
+          <button class="tab-btn" data-stab="blocklists" onclick="switchSettingsTab('blocklists')">Block Lists</button>
           <button class="tab-btn" data-stab="audit" onclick="switchSettingsTab('audit')">Audit Log</button>
         </div>
 
@@ -589,6 +593,331 @@ Categories: 3000, 3010, 3020</div>
           <div id="classifierRules">
             <div class="flex flex-col gap-4" id="classifierRulesList">
               <!-- Demo rules rendered by JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Liveness sub-tab -->
+        <div class="tab-panel" id="stab-liveness">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h3 style="font-size:var(--text-lg);font-weight:var(--weight-semibold)">Liveness Pipeline</h3>
+              <p class="text-sm text-muted mt-2">
+                Per-infohash health derived from qBittorrent state observations and *arr import outcomes.
+                Dead torrents are excluded from Torznab responses; revalidation re-checks them on a schedule.
+              </p>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="loadLivenessOps()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+              Refresh
+            </button>
+          </div>
+
+          <!-- Live counters -->
+          <div class="stats-grid mb-6">
+            <div class="stat-card">
+              <div class="stat-icon green">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <div class="stat-label">Alive Observations</div>
+              <div class="stat-value" id="livenessObsAlive">--</div>
+              <div class="text-xs text-subtle">qB seeding/uploading + *arr import</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon orange">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              </div>
+              <div class="stat-label">Suspect Observations</div>
+              <div class="stat-value" id="livenessObsSuspect">--</div>
+              <div class="text-xs text-subtle">qB stalledDL/metaDL/error</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon red">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+              </div>
+              <div class="stat-label">Dead Blocklist</div>
+              <div class="stat-value" id="livenessBlacklist">--</div>
+              <div class="text-xs text-subtle"><span id="livenessExcluded">--</span> total filtered</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon blue">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+              </div>
+              <div class="stat-label">Revalidation Recovery</div>
+              <div class="stat-value" id="livenessRecoveryRate">--</div>
+              <div class="text-xs text-subtle"><span id="livenessRevalidAlive">0</span> alive / <span id="livenessRevalidDead">0</span> still dead</div>
+            </div>
+          </div>
+
+          <!-- Configured thresholds (read-only — set via env vars on the bitagent core) -->
+          <div class="card mb-6">
+            <div class="card-header">
+              <span class="card-title">Configured Thresholds</span>
+              <span class="text-xs text-subtle">Set via env vars on the bitagent core. Restart required to change.</span>
+            </div>
+            <div class="card-body">
+              <table>
+                <thead><tr><th>Knob</th><th>Env var</th><th>Default</th><th>What it does</th></tr></thead>
+                <tbody>
+                  <tr>
+                    <td><code class="font-mono text-xs">enabled</code></td>
+                    <td><code class="font-mono text-xs">BITAGENT_EVIDENCE__LIVENESS__ENABLED</code></td>
+                    <td><span class="pill pill-success">true</span></td>
+                    <td>Master toggle. When false, no observations are emitted and Torznab responses are unfiltered (zero overhead).</td>
+                  </tr>
+                  <tr>
+                    <td><code class="font-mono text-xs">stall_threshold_hours</code></td>
+                    <td><code class="font-mono text-xs">…__STALL_THRESHOLD_HOURS</code></td>
+                    <td><code>4</code></td>
+                    <td>How long a torrent must stay in stalledDL/metaDL before it's eligible to be marked dead.</td>
+                  </tr>
+                  <tr>
+                    <td><code class="font-mono text-xs">min_observations</code></td>
+                    <td><code class="font-mono text-xs">…__MIN_OBSERVATIONS</code></td>
+                    <td><code>2</code></td>
+                    <td>How many independent suspect observations are required. Guards against transient network issues.</td>
+                  </tr>
+                  <tr>
+                    <td><code class="font-mono text-xs">blacklist_ttl_days</code></td>
+                    <td><code class="font-mono text-xs">…__BLACKLIST_TTL_DAYS</code></td>
+                    <td><code>30</code></td>
+                    <td>How long until a dead torrent gets re-checked. Lower = faster recovery if it comes back; higher = less DHT load.</td>
+                  </tr>
+                  <tr>
+                    <td><code class="font-mono text-xs">revalidate_interval</code></td>
+                    <td><code class="font-mono text-xs">…__REVALIDATE_INTERVAL</code></td>
+                    <td><code>6h</code></td>
+                    <td>How often the revalidation worker wakes up to re-check a batch of dead torrents.</td>
+                  </tr>
+                  <tr>
+                    <td><code class="font-mono text-xs">revalidate_min_peers</code></td>
+                    <td><code class="font-mono text-xs">…__REVALIDATE_MIN_PEERS</code></td>
+                    <td><code>2</code></td>
+                    <td>Minimum DHT peers that must respond to a get_peers query for the torrent to be marked alive again.</td>
+                  </tr>
+                  <tr>
+                    <td><code class="font-mono text-xs">exclude_private_tracker_grabs</code></td>
+                    <td><code class="font-mono text-xs">…__EXCLUDE_PRIVATE_TRACKER_GRABS</code></td>
+                    <td><span class="pill pill-success">true</span></td>
+                    <td>When a *arr imports a torrent in the qB <code>private</code> category, don't credit it as alive evidence — the file came from a private tracker, not BitAgent's catalog.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Explainer -->
+          <div class="card">
+            <div class="card-header"><span class="card-title">How it works</span></div>
+            <div class="card-body">
+              <div class="text-sm" style="line-height:1.7">
+                <p class="mb-3"><strong>Inputs.</strong> Every <code class="font-mono text-xs">/api/v2/torrents/info</code> poll cycle, qBittorrent reports the state of each torrent it knows about. <code>seeding/uploading/downloading</code> = alive. <code>stalledDL/metaDL/error/missingFiles</code> = suspect. Plus every successful <code>*arr</code> import webhook = alive.</p>
+                <p class="mb-3"><strong>Resolution.</strong> A torrent is marked <span class="pill pill-error">dead</span> only after <em>min_observations</em> independent suspect observations across at least <em>stall_threshold_hours</em>. Any single alive observation immediately wins.</p>
+                <p class="mb-3"><strong>Output.</strong> Dead infohashes are filtered out of Torznab responses before they reach Sonarr/Radarr — no stale grabs.</p>
+                <p class="mb-0"><strong>Revalidation.</strong> Every <em>revalidate_interval</em>, the worker picks a batch of dead torrents and fires a DHT <code>get_peers</code> query. If <em>revalidate_min_peers</em> respond, the torrent is reinstated as alive. Otherwise it stays dead until the next sweep.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filters sub-tab — read-only view of the bitagent core's contentfilter -->
+        <div class="tab-panel" id="stab-filters">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h3 style="font-size:var(--text-lg);font-weight:var(--weight-semibold)">Content Filters</h3>
+              <p class="text-sm text-muted mt-2">
+                The bitagent core runs three filter axes against every torrent it sees.
+                Toggles below reflect each axis's current activity. Configuration is set
+                via env vars on the core stack — see the env column for the exact key.
+              </p>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="loadFiltersStatus()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+              Refresh
+            </button>
+          </div>
+
+          <div class="filter-grid mb-6">
+            <div class="filter-card" id="filterNsfw">
+              <div class="filter-card-head">
+                <div class="filter-icon" style="color:#f87171">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                </div>
+                <div>
+                  <div class="filter-name">NSFW Keyword Filter</div>
+                  <div class="text-xs text-subtle">Drops torrents with adult-content keywords in the title</div>
+                </div>
+                <div class="filter-toggle" id="filterNsfwToggle"><span class="pill pill-neutral">--</span></div>
+              </div>
+              <div class="filter-stat">
+                <span class="text-xs text-subtle">Total dropped</span>
+                <span class="font-mono text-sm" id="filterNsfwCount">--</span>
+              </div>
+              <div class="filter-env">
+                <code class="font-mono text-xs">CLASSIFIER_DELETE_XXX</code>
+              </div>
+            </div>
+
+            <div class="filter-card" id="filterNonLatin">
+              <div class="filter-card-head">
+                <div class="filter-icon" style="color:#fbbf24">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>
+                </div>
+                <div>
+                  <div class="filter-name">Non-Latin Script Filter</div>
+                  <div class="text-xs text-subtle">Drops torrents whose title is primarily non-Latin (CJK, Cyrillic, etc.)</div>
+                </div>
+                <div class="filter-toggle" id="filterNonLatinToggle"><span class="pill pill-neutral">--</span></div>
+              </div>
+              <div class="filter-stat">
+                <span class="text-xs text-subtle">Total dropped</span>
+                <span class="font-mono text-sm" id="filterNonLatinCount">--</span>
+              </div>
+              <div class="filter-env">
+                <code class="font-mono text-xs">CLASSIFIER_NON_LATIN_FILTER</code>
+              </div>
+            </div>
+
+            <div class="filter-card" id="filterExt">
+              <div class="filter-card-head">
+                <div class="filter-icon" style="color:#a78bfa">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                </div>
+                <div>
+                  <div class="filter-name">Blocked Extensions</div>
+                  <div class="text-xs text-subtle">Drops torrents whose primary file extension matches the blocklist</div>
+                </div>
+                <div class="filter-toggle" id="filterExtToggle"><span class="pill pill-neutral">--</span></div>
+              </div>
+              <div class="filter-stat">
+                <span class="text-xs text-subtle">Total dropped</span>
+                <span class="font-mono text-sm" id="filterExtCount">--</span>
+              </div>
+              <div class="filter-env">
+                <code class="font-mono text-xs">CLASSIFIER_BLOCKED_EXTENSIONS</code>
+              </div>
+            </div>
+          </div>
+
+          <!-- Per-extension breakdown -->
+          <div class="card mb-6">
+            <div class="card-header">
+              <span class="card-title">Blocked Extensions — Per-Type Counts</span>
+              <span class="text-xs text-subtle" id="filterExtTotal">--</span>
+            </div>
+            <div class="card-body">
+              <div id="filterExtBreakdown" class="ext-grid">
+                <div class="empty-state" style="padding:var(--space-6)">
+                  <p class="text-sm text-muted">Loading...</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Examined total -->
+          <div class="card">
+            <div class="card-header"><span class="card-title">Pipeline Throughput</span></div>
+            <div class="card-body">
+              <p class="text-sm text-muted mb-3">Total torrents the contentfilter has examined since boot. The drop counters above are subsets of this.</p>
+              <div style="font-size:var(--text-2xl);font-weight:var(--weight-semibold);font-variant-numeric:tabular-nums" id="filterExamined">--</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Block Lists sub-tab — liveness + CSAM read-only + operator block phrases -->
+        <div class="tab-panel" id="stab-blocklists">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h3 style="font-size:var(--text-lg);font-weight:var(--weight-semibold)">Block Lists</h3>
+              <p class="text-sm text-muted mt-2">
+                Two automatic blocklists run on the bitagent core (Liveness + CSAM).
+                Below them: operator-managed block phrases that filter the Library tab
+                in this dashboard. (Future: feed these phrases into the core's filter chain.)
+              </p>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="loadBlockLists()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+              Refresh
+            </button>
+          </div>
+
+          <!-- Automatic blocklists -->
+          <div class="grid-2 mb-6">
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">Liveness Blocklist</span>
+                <span class="text-xs text-subtle">Per-infohash, qB-driven</span>
+              </div>
+              <div class="card-body">
+                <div class="kv-row"><span>Currently blocked</span><span class="font-mono" id="blListLivenessSize">--</span></div>
+                <div class="kv-row"><span>Filtered from Torznab</span><span class="font-mono" id="blListLivenessExcluded">--</span></div>
+                <div class="kv-row"><span>Block rate</span><span class="font-mono"><span id="blListLivenessRate">--</span> filtered/min</span></div>
+                <p class="text-xs text-muted mt-3">
+                  Configure thresholds in the <a href="#" onclick="switchSettingsTab('liveness');return false;">Liveness</a> sub-tab.
+                </p>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">CSAM Blocklist</span>
+                <span class="text-xs text-subtle">Pre-fetch double-hash defense</span>
+              </div>
+              <div class="card-body">
+                <div class="kv-row"><span>Blocklist entries</span><span class="font-mono" id="blListCsamEntries">--</span></div>
+                <div class="kv-row"><span>Lookups performed</span><span class="font-mono" id="blListCsamLookups">--</span></div>
+                <div class="kv-row"><span>Exports</span><span class="font-mono" id="blListCsamExports">--</span></div>
+                <p class="text-xs text-muted mt-3">
+                  Sourced from upstream community feeds via <code class="font-mono text-xs">CSAM_BLOCKLIST_FEED_URLS</code>.
+                  Empty = NoOp (no feed configured).
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Operator block phrases — full CRUD -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Operator Block Phrases</span>
+              <span class="text-xs text-subtle">Substring-matched against torrent titles. Library tab only (for now).</span>
+            </div>
+            <div class="card-body">
+              <div class="flex gap-2 mb-4">
+                <input
+                  type="text"
+                  id="blockPhraseInput"
+                  class="input flex-1"
+                  placeholder="Phrase (case-insensitive substring, e.g. 'TGx' or 'sample only')"
+                  maxlength="200"
+                  onkeydown="if(event.key==='Enter') addBlockPhrase()"
+                />
+                <input
+                  type="text"
+                  id="blockPhraseNote"
+                  class="input"
+                  style="width:240px"
+                  placeholder="Optional note (why)"
+                  maxlength="120"
+                />
+                <button class="btn btn-primary" onclick="addBlockPhrase()">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  Add
+                </button>
+              </div>
+              <div id="blockPhraseError" class="text-xs" style="color:#f87171;margin-bottom:var(--space-3);display:none"></div>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Phrase</th>
+                    <th>Note</th>
+                    <th style="text-align:right">Hits</th>
+                    <th>Added</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="blockPhraseTable">
+                  <tr><td colspan="5"><div class="empty-state"><p class="text-sm text-muted">Loading...</p></div></td></tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
