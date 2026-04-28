@@ -19,24 +19,42 @@
 #   POSTGRES_USER=bitagent
 #   POSTGRES_PASSWORD=<openssl rand -hex 16>
 #   POSTGRES_DB=bitagent
+#
+# ─────────────────────────────────────────────────────────────────────────
+# HEADS-UP — bitagent core image not yet published.
+#   The BitAgent fork's DHT-crawler / classifier / Torznab core binary is
+#   still being prepped for public release. The `bitagent:` service below
+#   pulls `docker.io/gekleos/bitagent:latest`, which does not yet exist.
+#   Until then, two paths:
+#     1. Build the core yourself from the fork's source (request access via
+#        https://github.com/gekleos/bitagent/discussions).
+#     2. Run upstream `ghcr.io/bitmagnet-io/bitmagnet:latest` directly. The
+#        env keys / command differ — see the upstream docs at
+#        https://bitmagnet.io/setup/installation.html. The dashboard below
+#        speaks the upstream GraphQL schema and will work against either.
+#   The dashboard image (`bitagent-ui:`) IS published — see
+#   https://hub.docker.com/r/gekleos/bitagent-ui.
+# ─────────────────────────────────────────────────────────────────────────
 
 services:
   bitagent:
-    image: ghcr.io/gekleos/bitagent:latest
+    image: docker.io/gekleos/bitagent:latest   # TBD — see HEADS-UP comment above
     restart: unless-stopped
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable
       BITAGENT_LOG_LEVEL: info
       TORZNAB_API_KEY: ${TORZNAB_API_KEY}
     ports:
-      - "3333:3333"  # Torznab — *arr clients hit this directly
+      - "3333:3333"  # Torznab + GraphQL — *arr clients hit this directly
+      - "3334:3334/tcp"  # BitTorrent peer port
+      - "3334:3334/udp"  # DHT
     networks: [public-net]
     depends_on:
       postgres:
         condition: service_healthy
 
   bitagent-ui:
-    image: ghcr.io/gekleos/bitagent-ui:latest
+    image: docker.io/gekleos/bitagent-ui:latest
     restart: unless-stopped
     environment:
       BITAGENT_GRAPHQL_URL: http://bitagent:3333/graphql
