@@ -1,12 +1,12 @@
 # BitAgent UI — flat-layout FastAPI app + Jinja2 templates + static assets.
 # Multi-stage: site-packages built once, runtime stays slim.
 
-FROM python:3.12-slim AS deps
+FROM python:3.14-slim AS deps
 WORKDIR /build
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-FROM python:3.12-slim
+FROM python:3.14-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
